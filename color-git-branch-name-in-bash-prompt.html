@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Раскрашиваем ветку Git в терминале</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/color-git-branch-name-in-bash-prompt.html" class="flag flag-ru"></a>
+                <a href="/en/color-git-branch-name-in-bash-prompt.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/">
+                            <span id="me">Евгений Скурихин</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Простой код, который работает</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="color-git-branch-name-in-bash-prompt" class="col-md-9">
+<header>
+<h2>Раскрашиваем ветку Git в терминале</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-01-24</span>
+</header>
+<h4 id="">Желаемый эффект</h4>
+<p>Если вы часто пользуетесь git, то иметь название текущей ветки в своей командной строке, а так же подсвечивать "грязные" ветки - звучит как хорошая идея.</p>
+<h4 id="-1">Начало пути</h4>
+<p>Я начал "допиливать" командную строку после прочтения <a href="http://mediadoneright.com/content/ultimate-git-ps1-bash-prompt">этой статьи</a>; в ней показано много интересных вещей, однако для меня это оказалось слишком. Я хотел что-то более простое с меньшим количеством информации в командной строке. В итоге получилось вот что:</p>
+<pre class="prettyprint">
+Red="\[\033[1;31m\]"
+Green="\[\033[1;32m\]"
+Reset="\[$(tput sgr0)\]"
+
+export PS1='$(git branch &>/dev/null;\
+if [ $? -eq 0 ]; then \
+    echo "$(echo `git status` | grep "nothing to commit" > /dev/null 2>&1; \
+    if [ "$?" -eq "0" ]; then \
+        echo "'$Green'"$(__git_ps1 "%s")"'$Reset'"; \
+    else \
+       echo "'$Red'"$(__git_ps1 "%s")"'$Reset'"; \
+    fi) "; \
+fi)'$PS1
+</pre>
+<h4 id="-2">Что происходит</h4>
+<p>Я оставил существующую $PS1 переменную перед именем ветки, и вот результат:</p>
+<p><img class="img-responsive thumbnail center-block" src="http://res.cloudinary.com/eugenesqr/image/upload/v1471941865/color-git-branch-name/git-bash.png" alt="Git Bash Ubuntu 13.04" /></p>
+<p>Когда в папке нет git репозитория, ничего не добавляется. "Грязная" master ветка репозитория "dotfiles" подсвечена. Master ветка репозитория "weather-widget" не подсвечена, т.к. изменения в ней отсутствуют.</p>
+<h4 id="-3">Совместимость</h4>
+<p>Работает под Ubuntu 13.04 с раскомментаренной строкой force<em>color</em>prompt=yes в .bashrc файле. А как насчет cygwin? В первый раз после запуска скрипта я получил ошибку:</p>
+<pre class="prettyprint">
+__git_ps1 command not found
+</pre>
+<p>Её удалось исправить, поместив <a href="https://raw.github.com/git/git/master/contrib/completion/git-prompt.sh">git-prompt.sh</a> в мою home директорию и загрузив этот скрипт перед главным скриптом выше.</p>
+<pre class="prettyprint">
+source ~/git-prompt.sh
+</pre>
+<p>В cygwin это выглядит немного криво ввиду формата командной строки по умолчанию, но меня устраивает.</p>
+<p><img class="img-responsive thumbnail center-block" src="http://res.cloudinary.com/eugenesqr/image/upload/v1471941865/color-git-branch-name/bash-cygwin.png" alt="Git Bash Cygwin" /></p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Еще заметки</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

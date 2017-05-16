@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Простой код, который работает</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/index.html" class="flag flag-ru"></a>
+                <a href="/en/index.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/">
+                            <span id="me">Евгений Скурихин</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Простой код, который работает</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<section id="post-listing-section" class="col-md-9"> 
+    <ul id="post-listing" class="separated-list">
+    </ul>
+</section>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Об авторе</h5>
+    <img src="/img/me.png" alt="me" class="thumbnail pull-left" />
+    <span>Я люблю строить софт. Моя цель - найти баланс между красивым кодом и продуктивностью, чтобы релизить классные приложения в срок.</span>
+
+    <h5>О сайте</h5>
+    <span>На сайте приведен список интересных на мой взгляд проблем, с которыми я сталкивался ранее, а так же возможные пути их решения.</span>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/listViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/listViewModel.js").then(function(m) {
+        var viewModel = new m.ListViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

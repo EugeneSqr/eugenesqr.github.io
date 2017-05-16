@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Оптимизация web сайта</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/optimizing-the-site.html" class="flag flag-ru"></a>
+                <a href="/en/optimizing-the-site.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/">
+                            <span id="me">Евгений Скурихин</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Простой код, который работает</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="optimizing-the-site" class="col-md-9">
+<header>
+<h2>Оптимизация web сайта</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-07-26</span>
+</header>
+<h4 id="">Зачем этим заниматься?</h4>
+<p>Недавно я закончил первую итерацию построения собственного сайта, а значит, пришло время подумать над web оптимизацией. Что если не заморачиваться и оставить все как есть? Посмотрим на результаты теста <a href="http://gtmetrix.com/">gtmetrix</a>: </p>
+<p><img class="img-responsive thumbnail center-block" src="http://res.cloudinary.com/eugenesqr/image/upload/v1471942129/website-performance-optimization/gtmetrix-before-optimization.png" alt="Результаты теста до оптимизации" /></p>
+<p>Один из тех неловких моментов, заставляющих переосмыслить происходящее. Не то чтобы меня сильно волновали оценки "F" и "C", но циферки справа огорчают. В данный момент я использую бесплатный хостинг <a href="https://www.heroku.com/">heroku</a>, и было бы глупо требовать от них сверхнизких таймингов. Однако, показатели по размеру загружаемой страницы и количеству запросов могли бы быть много лучше.</p>
+<h4 id="-1">Что делать?</h4>
+<p>Ответ на этот извечный русский вопрос в данном случае не сложен; вот список:</p>
+<ol>
+<li>Минифицировать статические файлы html, JavaScript и css. Браузерам нет дела до пробелов, выравнивания, наименований и прочих техник, которые люди используют для повышения читаемости кода. Если так, то зачем оставлять их на проде?</li>
+<li>Объединить минифицированные файлы в логические группы (далее бандлы) и задействовать для их хранения минимальное количество файлов (чтобы уменьшить число запросов на сервер). Современные браузеры могут загружать контент из нескольких источников одновременно, однако число параллельных запросов не велико. Это число <a href="http://stackoverflow.com/questions/985431/max-parallel-http-connections-in-a-browser">изменяется от браузера к браузеру</a>, но общая стратегия остается неизменной: придерживаться минимально возможного количества запросов. Тут так же следует следить за тем, чтобы объем данных, передаваемых в каждом запросе, не стал слишком большим.</li>
+<li>Сжать получившиеся бандлы при помощи gzip. Моя первая попытка сделать это описана <a href="/ru/posts/selectively-gzipping-your-site">в этой заметке</a>. Здесь же я планирую показать более продвинутый подход.</li>
+</ol>
+<h4 id="-2">Не так быстро</h4>
+<p>Необходимось оптимизации порождает некоторые проблемы на этапе разработки. Во-первых, слишком трудозатратно постоянно сжимать файлы вручную, некоторая автоматизация абсолютно необходима. Во-вторых, я предпочитаю работать с неоптимизированным кодом во время разработки, потому что меня не сильно прельщает идея запуска процедуты оптимизации на каждое изменение в JavaScript или html. Наконец, я не хочу сохранять лишние изменения в git. Идеальный процесс может быть описан так: пишем код -&gt; сохраняем в девелоперскую ветку только неоптимизированный код -&gt; перед самым релизом оптимизируем -&gt; закидываем на прод.</p>
+<h4 id="-3">Решение</h4>
+<p>Я использую две корневые директории для своего сайта. Неоптимизированные файлы хранятся в папке "app"; во время оптимизации файлы забираются из этой папки и помещаются во вложенную директорию "public". Затем мне лишь остается сказать express какой набор файлов использовать в зависимости от конфигурации:</p>
+<pre class="prettyprint">
+var rootDir = (isProduction()) ? __dirname + "/app/public" : __dirname + "/app";
+   app.use(express.static(rootDir));
+   app.all("*", function(req, res, next) {
+       res.sendfile("index.html", { root: rootDir });
+});
+
+function isProduction() {
+    return process.env.NODE_ENV === "prod";
+}
+</pre>
+<h4 id="-4">Автоматизация процесса оптимизации</h4>
+<p>Задача имеет множество решений, из которых я отдаю предпочтение <a href="http://gruntjs.com/">gruntjs</a>. Он бесплатен, прост и имеет отличную модульную архитектуру. Если вы не знакомы с этим инструментом, я бы советовал сперва прочитать обзор.</p>
+<h4 id="css">Минификация CSS</h4>
+<p>Так как я уже использую модуль <a href="https://github.com/gruntjs/grunt-contrib-less">grunt-contrib-less</a> для генерации легко поддерживаемого css, это лишь дело одного флага - заставить gruntjs сжимать результат. Вот конфигурация задачи (далее таски) в Gruntfile.js:</p>
+<pre class="prettyprint">
+less: {
+    development: {
+        options: { compress: false },
+            files: { "app/css/bootstrap.css": "themes/composite.less" }
+        },
+    production : {
+        options: { compress: true },
+            files: { "app/public/css/bootstrap.css.min": "themes/composite.less" }
+    }
+}
+</pre>
+<p>Легко видеть, я использую две конфигурации: development и production, таким образом я могу корректировать поведение grunt при запуске.</p>
+<h4 id="javascript">Минификация и бандлинг JavaScript</h4>
+<p>JavaScript может быть минифицирован и объединен в один файл с использованием <a href="https://github.com/gruntjs/grunt-contrib-uglify">grunt-contrib-uglify</a>.</p>
+<pre class="prettyprint">
+uglify : {
+    production: {
+        files: [{
+            "app/public/js/scripts.js.min": [
+                "bower_components/angular/angular.js",
+                "bower_components/angular-route/angular-route.js",
+                "bower_components/angular-animate/angular-animate.js",
+                "bower_components/angular-translate/angular-translate.js",
+                "bower_components/angular-resource/angular-resource.js",
+                "bower_components/angular-sanitize/angular-sanitize.js",
+                "app/js/main.js",
+                "app/js/translations.js",
+                "app/js/routes.js",
+                "app/js/controllers.js",
+                "app/js/services.js",
+                "app/js/directives.js" ]
+        }]
+    }
+}
+</pre>
+<p>Здесь и далее я использую только одну конфигурацию, т.к. при разработке предпочитаю отказаться от оптимизации. Весь JavaScript код, что у меня есть на данный момент, я объединил в один файл, назвал его <code>scripts.js.min</code> и поместил внутрь папки <code>public/js</code>.</p>
+<h4 id="html">Минификация Html</h4>
+<p>Мне потребуется еще один модуль <a href="https://github.com/gruntjs/grunt-contrib-htmlmin">grunt-contrib-htmlmin</a>.</p>
+<pre class="prettyprint">
+htmlmin : {
+    production: {
+        options: {
+            removeComments: true,
+            collapseWhitespace: true
+        },
+        files: {
+            "app/public/index.html.min": "app/index.html.prod",
+
+            "app/public/partials/post-detail.html.min": 
+                "app/partials/post-detail.html",
+
+            "app/public/partials/post-listing.html.min": 
+                "app/partials/post-listing.html"
+
+            "app/public/partials/404.html.min": 
+                "app/partials/404.html"
+        }
+    }
+}
+</pre>
+<p>Я минифицирую каждый файл по отдельности, т.к. у меня их немного. У модуля должны быть предусмотрены шаблоны для указания целого набора файлов сразу. Возможно в будущем мне придется к этому вернуться.
+'Обратите внимание на первую пару файлов: я беру <code>app/index.html.prod</code> и минифицирую его в <code>app/public/index.html.min</code>. Но что такое <code>index.html.prod</code>? Файл нужнен для того, чтобы указать набор скриптов, отличный от того, что используется при разработке (ведь мы объединили все скрипты в один); таким образом, я вынужден поддерживать две точки входа. В общем случае это плохо, однако файл <code>index.html</code> не должен меняться часто, так что в данном конкретном случае это не должно стать проблемой.</p>
+<h4 id="-5">Сжатие</h4>
+<p>Я почти закончил, модуль <a href="https://github.com/gruntjs/grunt-contrib-compress">grunt-contrib-compress</a> поможет с сжатием получившихся файлов.</p>
+<pre class="prettyprint">
+compress : {
+    production : {
+        options: { mode: "gzip", level: 9 },
+        files : [
+            { 
+                expand: true, 
+                src: "app/public/css/bootstrap.css.min",
+                dest: "",
+                ext: ".css" 
+            },
+            { 
+                expand: true,
+                src: "app/public/js/scripts.js.min",
+                dest: "",
+                ext: ".js" 
+            },
+            {
+                expand: true,
+                src: "app/public/partials/*.html.min",
+                dest: "", ext: ".html" 
+            },
+            {
+                expand: true,
+                src: "app/public/index.html.min",
+                dest: "",
+                ext: ".html" 
+            },
+            {
+                expand: true,
+                src: "app/public/js/prettify/*.js.min",
+                dest: "",
+                ext: ".js" 
+            },
+            {
+                expand: true,
+                cwd: "app",
+                src: "fonts/*",
+                dest: "app/public/" 
+            },
+            {
+                expand: true,
+                cwd: "app",
+                src: "img/*",
+                dest: "app/public/" 
+            }
+        ]
+    }
+}
+</pre>
+<p>Конфигурация говорит сама за себя. Единственное, на что стоит обратить внимание - это то, что модуль не заменяет сам файл в процессе сжатия. Приходится брать минифицированную версию с расширением .min и сжимать в другой файл с отбрасыванием этого окончания.</p>
+<h4 id="-6">Очистка</h4>
+<p>Завершающий шаг. Все файлы *.min следует удалить т.к. они больше не нужны, и я не хочу их видеть :) <a href="https://github.com/gruntjs/grunt-contrib-clean">grunt-contrib-clean</a> вступает в игру.</p>
+<pre class="prettyprint">
+clean: [ "app/public/**/*.min" ]
+</pre>
+<h4 id="-7">Все вместе</h4>
+<p>Результырующий набор тасок для dev (по умолчанию) и prod конфигураций:</p>
+<pre class="prettyprint">
+grunt.registerTask(
+    "default",
+    [ "jshint", "less:development" ]);
+
+grunt.registerTask(
+    "prod",
+    [ "less:production", "uglify", "htmlmin", "compress", "clean" ]);
+</pre>
+<h4 id="-8">Оно того стоило?</h4>
+<p>Наконец, я могу переключить heroku на мою прод конфикурацию: <code>heroku config:set NODE_ENV="prod"</code> и запустить тест gtmetrix снова.</p>
+<p><img class="img-responsive thumbnail center-block" src="http://res.cloudinary.com/eugenesqr/image/upload/v1471942128/website-performance-optimization/gtmetrix-after-optimization.png" alt="Тест производительности после оптимизации" /></p>
+<p>Теперь посетителям нужно загружать в десять раз меньше, а время загрузки сократилось более чем в два раза! Стоило ли оно того? Разумеется.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Еще заметки</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Dates Localization In Angular</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/dates-localization-in-angular.html" class="flag flag-ru"></a>
+                <a href="/en/dates-localization-in-angular.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/en/">
+                            <span id="me">Eugene Skurikhin</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Simple code that works</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="dates-localization-in-angular" class="col-md-9">
+<header>
+<h2>Dates Localization In Angular</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-08-11</span>
+</header>
+<h4 id="whynotusingangularbuiltinlocalizationcapabilities">Why not using angular built in localization capabilities?</h4>
+<p>Let's examine what angular platform <a href="https://docs.angularjs.org/guide/i18n">can offer</a>. They suggest specifying one language per page by referencing the corresponding version of localization script. One can speculate on this approach by adding some script referencing logic on a server, but do I really need to reload the entire page just to change language context?</p>
+<p>For text localization I use <a href="https://github.com/angular-translate/angular-translate">angular-translate</a> and I really like how it handles translation on the fly. I simply identify the piece of text I need to translate and set the desired language; the text gets changed without reloading the page. What if I could use a similar approach for formatting my dates? Something like <code>mysticalFormatter.format(myDate, 'ru')</code>.</p>
+<h4 id="whynotusingangulartranslatebuiltindateslocalizationcapabilities">Why not using angular-translate built in dates localization capabilities?</h4>
+<p>Well, because I didn't find any. Moreover what I really need is too specific to hand it over to any third party libraries. First I need only two languages (English and Russian). Second I don't need tons of different formats: one per language is sufficient. Therefore I need months localized plus two format functions.</p>
+<p>Looks like it is time to reinvent the wheel. So be it!</p>
+<h4 id="theidea">The idea</h4>
+<p>The idea is described <a href="http://stackoverflow.com/questions/3552461/how-to-format-javascript-date">here</a>: we keep two arrays - one per language and access the month's name by index obtained with <code>date.getMonth() - 1</code>. That's it; all subsequent actions are just decorations. But the Devil is in the details, so let's keep going.</p>
+<h4 id="theangularway">The angular way</h4>
+<p>I'm going to create a separate <code>siteFormatters</code> angular module with a single <code>dateFormatter</code> service to encapsulate all pieces of functionality I need to handle dates localization.</p>
+<pre class="prettyprint">
+var formatter = angular.module("siteFormatters", []);
+formatter.service("dateFormatter", [ DateFormatter ]);
+
+function DateFormatter() {
+    var months = {
+        "en" : [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ],
+        "ru" : [ "Янв", "Фев", "Мар", "Апр", "Май", "Июн", 
+            "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек" ],
+    };
+
+    var formats = {
+        "en" : function(date) {
+            return getMonth(date, "en") + 
+                " " + date.getDate() + 
+                " " + date.getFullYear();
+        },
+        "ru" : function(date) {
+            return date.getDate() + 
+                " " + getMonth(date, "ru") + 
+                " " + date.getFullYear();
+        }
+    };
+
+    this.format = function(date, lang) {
+        return formats[lang](date);
+    };
+
+    function getMonth(date, lang) {
+        return months[lang][date.getMonth() - 1];
+    }
+}
+</pre>
+<h4 id="customdirective">Custom directive</h4>
+<p>To reference the formatter from markup I'm going to create a custom angular directive in the same module:</p>
+<pre class="prettyprint">
+formatter.directive("myDate", [ "dateFormatter", function(dateFormatter) {
+    return {
+        restrict: \'A\',
+        scope: {
+            date: \'=\',
+            lang: \'=\'
+        },
+        template: \'&lt;span class="date"&gt;{{localizedDate}}&lt;/span&gt;\',
+        link: function(scope, element, attrs) {
+            var date = new Date(scope.date);
+            scope.localizedDate = dateFormatter.format(date, scope.lang);
+        },
+        replace: true
+    };
+}]);
+</pre>
+<p>... and reference it from html:</p>
+<pre class="prettyprint">
+&lt;span data-date="post.published" data-lang="language" my-date&gt;&lt;/span&gt;
+</pre>
+<p>I feel like being explicit is a good thing (<a href="http://legacy.python.org/dev/peps/pep-0020/">hello python</a>); that's why I inject date and language into my directive from outer scope instead of using parent's scope implicitly inside the directive.</p>
+<p>In this particular case I don't perform any checks on input date and language because I fully control the places where they came from. If something is wrong with the input I want to see it ASAP instead of concealing the problem.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Other posts</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

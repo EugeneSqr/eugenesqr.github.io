@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Создание виджета прогноза погоды с использованием Node.js и Redis</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/weather-forecast-widget.html" class="flag flag-ru"></a>
+                <a href="/en/weather-forecast-widget.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/">
+                            <span id="me">Евгений Скурихин</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Простой код, который работает</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="weather-forecast-widget" class="col-md-9">
+<header>
+<h2>Создание виджета прогноза погоды с использованием Node.js и Redis</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-01-31</span>
+</header>
+<h4 id="">Что будем строить</h4>
+<p>В этом посте я опишу процесс создания виджета с прогнозом погоды. Я буду использовать Redis для хранения данных и связку Node.js + Express с движком Mustache для web. Модуль "node canvas", основанный на Cairo, будет полезен для генерации изображений на сервере.</p>
+<h4 id="weatheraggregator">Weather aggregator</h4>
+<p>Для начала нам нужно получить данные по прогнозу погоды, распарсить их, сгенерировать простенькую визуализацию и сохранить в Redis. Возложим эту работу на первый модуль и назовем его "weather-aggregator". Это будет простое консольное приложение, которое можно будет запускать в командной строке с определенным временным интервалом. <a href="http://www.yandex.ru/">Сервис Яндекса</a> на мой взгляд как раз то, что надо.</p>
+<p>Посмотрим на содержимое package.json, чтобы понять какие зависимости у нас имеются: </p>
+<ul>
+<li><a href="https://github.com/mikeal/request">request</a> - чтобы забирать данные с сервиса;</li>
+<li><a href="https://github.com/Leonidas-from-XIV/node-xml2js">xml2js</a> - парсинг XML;</li>
+<li><a href="https://github.com/learnboost/node-canvas">canvas</a> - генерация картинок;</li>
+<li><a href="https://github.com/mranney/node_redis">redis</a> - угадайте что :)</li>
+</ul>
+<p>Чтобы установить node canvas сначала потребуется <a href="http://cairographics.org/download/">установить Cairo</a>. Возможно понадобится обновить некоторые dev библиотеки. Мой друг, например, не стал заморачиваться, а просто установил <a href="http://releases.ubuntu.com/saucy/">последнюю ubuntu (13.10)</a>.</p>
+<p>Весь код может быть найден в <a href="https://github.com/EugeneSqr/weather-widget/">моем github репозитории</a>. Здесь я лишь поверхностно опишу подход и некоторые проблемы. Файл app.js запускает процесс агрегации. Три асинхронных запроса отсылаются на сервер: по одному на каждый из трех интересующих меня городов. В функции обратного вызова я использую модуль extractor.js для конвертации входящего XML в объекты JavaScript, выбирая только те данные, которые мне нужны в рамках задачи. Затем модуль "imagebuilder" создает визуализацию и, наконец, модуль "storage" сохраняет двоичные данные на сервер redis. Весь процесс довольно примитивен, единственный момент, на которые стоит обратить внимание - использование контекстов. Из-за асинхронной природы Node.js необходимо создавать нескольно экземпляров хэлперов, каждый со своим контекстом. Это предотвратит странно выглядящие ошибки, такие как многократное рисование на одном канвасе (поверх старого изображения).</p>
+<h4 id="widgetgenerator">Widget-generator</h4>
+<p>Теперь когда у нас есть все необходимые данные из сервиса погоды, самое время их отобразить. Этим займется widget-generator. Как и раньше, посмотрим для начала на содержимое package.json:</p>
+<ul>
+<li>redis - для извлечения данных из хранилища</li>
+<li><a href="http://expressjs.com/guide.html">express</a> - основа для построения web-приложений на Node.js</li>
+<li><a href="https://npmjs.org/package/mustache-express">mustache-express</a> - для более легкой интеграции <a href="http://mustache.github.io/">mustache</a> в express.</li>
+</ul>
+<p>Единственой проблемой, с которой я столкнулся, была связана с извлечением картинок из Redis. К счастью, <a href="https://groups.google.com/forum/#!topic/nodejs/VQKL4aW_otA">здесь</a> описано готовое решение. Как я уже говорил, я не буду описывать детали реализации сдесь: просто клонируйте репозиторий, чтобы узнать что к чему.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Еще заметки</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Simple code that works</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/index.html" class="flag flag-ru"></a>
+                <a href="/en/index.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/en/">
+                            <span id="me">Eugene Skurikhin</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Simple code that works</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<section id="post-listing-section" class="col-md-9"> 
+    <ul id="post-listing" class="separated-list">
+    </ul>
+</section>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>About the Author</h5>
+    <img src="/img/me.png" alt="me" class="thumbnail pull-left" />
+    <span>I love building software. My goal is to find a balance between code aesthetics and being productive to deliver cool apps in time.</span>
+
+    <h5>About the Site</h5>
+    <span>The site contains a list of interesting problems I faced with possible solutions. English section of it - is a way for me to improve my English writing skills; so if you see any kind of problems there, please don't hesitate to point that out.</span>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/listViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/listViewModel.js").then(function(m) {
+        var viewModel = new m.ListViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

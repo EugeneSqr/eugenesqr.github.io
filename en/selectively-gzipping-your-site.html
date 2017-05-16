@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Selectively Gzipping Your Site</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/selectively-gzipping-your-site.html" class="flag flag-ru"></a>
+                <a href="/en/selectively-gzipping-your-site.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/en/">
+                            <span id="me">Eugene Skurikhin</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Simple code that works</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="selectively-gzipping-your-site" class="col-md-9">
+<header>
+<h2>Selectively Gzipping Your Site</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-06-02</span>
+</header>
+<h4 id="motivation">Motivation</h4>
+<p>I decided to build my personal web site. The key idea was to keep things as simple and fast as possible while sticking with modern cool techniques like SPA and MVVM.</p>
+<p>I picked the Node + Angular + MongoDB combo as a foundation and started hacking. Soon I realized that I need some data compression to keep things really small.',</p>
+<h4 id="thealternatives">The alternatives</h4>
+<p>Basically I had two options: </p>
+<ul>
+<li>compress all traffic on the fly using special middleware;</li>
+<li>compress files beforehand, keep them on a server and let the browser know that the data was compressed.</li>
+</ul>
+<p>The second approach looked promising cause it allowed to reduce CPU load. Why compressing something every time you need it while you can do it one time beforehand? Keeping simplicity and performance in mind I decided to go for it.</p>
+<p>By that time I was using <a href="http://mcavage.me/node-restify/">restify</a> and had something around 10 files served statically plus some basic routing for providing content:</p>
+<pre class="prettyprint">
+var restify = require("restify");
+
+var server = restify.createServer();
+server.get("/hello/:name", respond);
+server.get(".*", restify.serveStatic({
+   directory: "./app",
+   default: "index.html"
+}));
+
+server.listen(process.env.PORT || 8080, function() {
+   console.log("%s listening at %s", server.name, server.url);
+});
+
+function respond(req, res, next) {
+   res.send("hello " + req.params.name);
+   next();
+}
+</pre>
+<h4 id="firstattempt">First Attempt</h4>
+<p>I <a href="https://github.com/mcavage/node-restify/issues/96">googled</a> a bit and added the following line after server creation:</p>
+<pre class="prettyprint">
+server.use(restify.gzipResponse());
+</pre>
+<p>Then I gzipped angular.min.js with the following command:',</p>
+<pre class="prettyprint">
+gzip -9 angular.min.js
+</pre>
+<p><img src="http://res.cloudinary.com/eugenesqr/image/upload/v1471941879/selectively-gzipping-your-site/gzipped.png" alt="gzipped content in FF" class="img-responsive thumbnail pull-right" /></p>
+<p>and renamed the result angular.min.js.gz file back to angular.min.js. </p>
+<p>Looked great: my browser was sending <code>Accept-Encoding: gzip,deflate</code> header, server was serving gzipped angular as static content (with proper <code>Content-Encoding: gzip</code> header) in response. But browsers refused to unpack this.</p>
+<h4 id="nexttry">Next try</h4>
+<p>I wasn't able to solve the problem and decided to switch to <a href="http://expressjs.com/">express</a>:</p>
+<pre class="prettyprint">
+var express = require("express");
+var app = express();
+var gzipPattern = /\.gzip\./
+
+app.use(function(req, res, next) {
+   if (gzipPattern.exec(req.url)) {
+       res.setHeader("Content-Encoding", "gzip");
+}
+   return next();
+});
+app.use(express.static(__dirname + "/app"));
+
+var port = process.env.PORT || 8080;
+app.listen(port);
+console.log("Express started on port " + port);
+</pre>
+<p>I prepended every gzipped file extension with "gzip" and added some logic for analyzing request urls and adding the "Content-Encoding" header where needed... and it started working.\n\n' +</p>
+<p>Now I gzip all static files, rename them and voila. But what about files that are changed often during development? Well, a dedicated <a href="http://gruntjs.com/">grunt</a> task is needed, but still it is a good start.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Other posts</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

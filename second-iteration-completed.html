@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Вторая итерация завершена</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/second-iteration-completed.html" class="flag flag-ru"></a>
+                <a href="/en/second-iteration-completed.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/">
+                            <span id="me">Евгений Скурихин</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Простой код, который работает</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="second-iteration-completed" class="col-md-9">
+<header>
+<h2>Вторая итерация завершена</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-08-13</span>
+</header>
+<h4 id="">Что добавлено</h4>
+<p>Я только что закончил вторую итерацию по разработке своего сайта.</p>
+<ul>
+<li><a href="/dates-localization-in-angular.html">локализиция дат</a>;</li>
+<li>пейджинг списка заметок;</li>
+<li>оптимизация хранилища на стороне сервера;</li>
+<li><a href="/google-analytics-in-angular.html">google analytics</a>;</li>
+<li>язык по умолчанию теперь русский.</li>
+</ul>
+<h4 id="-1">Отложенные задачи</h4>
+<ul>
+<li>миграция старых статей, потому что я решил сосредоточиться на новом контенте и оставить старый блог как есть;</li>
+<li>автоматическая проверка орфографии, так как количество заметок, которые я пишу, не велико, ручной проверки при помощи сторонних инструментов должно хватить.</li>
+</ul>
+<h4 id="-2">Что дальше?</h4>
+<p>Сайт полностью функционирует, и мне нравится как я могу, используя его, делиться своими мыслями. Социальные возможности отсутствуют, что довольно неприятно, однако, я вполне могу с этим жить (по крайней мере какое-то время).
+Что важнее, я наконец получил вот эти книги с Amazon (привет Почте России):</p>
+<ul>
+<li><a href="http://www.amazon.co.uk/gp/product/020170353X">Accelerated C++: Practical Programming by Example</a></li>
+<li><a href="http://www.amazon.co.uk/gp/product/0321334876">Effective C++: 55 Specific Ways to Improve Your Programs and Designs</a></li>
+<li><a href="http://www.amazon.co.uk/gp/product/0201749629">Effective STL: 50 Specific Ways to Improve Your Use of the Standard Template Library</a></li>
+</ul>
+<p>и теперь планирую потратить время на их изучение.</p>
+<p>Так что скорее всего следующая заметка будет из области C++ :)</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Еще заметки</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

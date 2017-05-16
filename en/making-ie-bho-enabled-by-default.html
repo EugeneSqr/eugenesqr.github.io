@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Making IE Browser Helper Objects Enabled By Default</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/making-ie-bho-enabled-by-default.html" class="flag flag-ru"></a>
+                <a href="/en/making-ie-bho-enabled-by-default.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/en/">
+                            <span id="me">Eugene Skurikhin</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Simple code that works</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="making-ie-bho-enabled-by-default" class="col-md-9">
+<header>
+<h2>Making IE Browser Helper Objects Enabled By Default</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-04-22</span>
+</header>
+<h4 id="theproblem">The problem</h4>
+<p>Suppose you write a great BHO to enhance user experience on the Web. Due to security reasons every time user installs your BHO and launches Internet Explorer he/she is prompted to enable the piece of software. At first glance - not a big deal, one extra click won't bother anybody. However this IE behavior causes a serious problem. The <code>IObjectWithSite::SetSite</code> method isn't triggered even after one pushes "enable" button. <code>DWebBrowserEvents2</code> aren't fired too. Therefore there is no way to determine that user accepted the BHO and it's time to rock. <a href="http://social.msdn.microsoft.com/Forums/ie/en-US/c6f64c9e-5a34-4d6f-a20e-7bc4fc8c6bac/enable-event-for-bho-in-ie9?forum=ieextensiondevelopment">Here</a> the question is explained in more details.</p>
+<h4 id="letsfindoutwhatscanbedone">Let's find out what's can be done</h4>
+<p>The first step to solve the problem is described <a href="http://social.technet.microsoft.com/Forums/windowsserver/en-US/6f4630a1-cbb0-41f6-8f54-b533cf451fc9/ie9-prompts-user-to-enabledisable-ie-addon-on-first-use?forum=winserverGP">here</a>. It appeared that we can "white list" our BHO by adding its CLSID to the right place. Of course it is inappropriate to have users set thing up this way themselves. We need to automate the process somehow.</p>
+<p><a href="http://www.askvg.com/how-to-disable-the-add-on-is-ready-for-use-popup-notification-message-in-internet-explorer/">This article</a> gives us a clue that all the stuff going on inside Group Policy Editor actually saved to the registry. The solution provided there is not going to work for us "as is" because we don't want to permit all addons by default.</p>
+<p>Lets combine the two approaches and perform all actions described in the first article while monitoring our registry with <a href="http://technet.microsoft.com/en-us/sysinternals/bb896645.aspx">Process Monitor</a>. It looks like the mmc.exe process adds the following registry key:</p>
+<p><code>HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Group Policy Objects\\{F658BF73-ACAA-4FF3-9F11-D57C9DB7EB16}User\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Ext\\CLSID
+      </code></p>
+<p>with the string value <code>{0CEA4335-9408-4C6E-8763-5E1C361FDA96}</code> set to 1.</p>
+<p>Alright, the <code>{0CEA4335-9408-4C6E-8763-5E1C361FDA96}</code> GUID is a CLSID of my BHO class. But what's that: <code>{F658BF73-ACAA-4FF3-9F11-D57C9DB7EB16}User</code>? To be honest I don't know, but I'm pretty sure that hardcoding this value is a bad idea. Instead let's add the same key to <code>HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Ext\\CLSID</code> as described in the second article... and it works.</p>
+<h4 id="theresult">The Result</h4>
+<p>At this point we can launch a .bat or .ps1 file during deployment and we're done. However If you're creating the BHO in Visual Studio using ATL project template the better way is to place all the registry magic to your registrar script (.rgs) file:</p>
+<pre class="prettyprint">
+HKCU {
+    NoRemove SOFTWARE {
+        NoRemove Microsoft {
+            NoRemove Windows {
+                NoRemove CurrentVersion {
+                    NoRemove Policies {
+                        ForceRemove 'Ext' {
+                            ForceRemove 'CLSID' {
+                                val '{0CEA4335-9408-4C6E-8763-5E1C361FDA96}' = s '1'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+</pre>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Other posts</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

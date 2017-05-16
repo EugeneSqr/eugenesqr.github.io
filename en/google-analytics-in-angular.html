@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Google Analytics In Angular</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/google-analytics-in-angular.html" class="flag flag-ru"></a>
+                <a href="/en/google-analytics-in-angular.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/en/">
+                            <span id="me">Eugene Skurikhin</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Simple code that works</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="google-analytics-in-angular" class="col-md-9">
+<header>
+<h2>Google Analytics In Angular</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-08-12</span>
+</header>
+<h4 id="agoodstartisimportant">A good start is important</h4>
+<p>Adding google analytics to a site is straightforward. There are tons of documentation/articles/posts on the Internet about it. Here I'm going to show a possible way of adding google analytics to a single page app (based on Angular) and counting page views. The approach can be further extended to collect other metrics but I think counting page views is a good start.</p>
+<p>In order to make google analytics work one have to add GATC (google analytics tracking code) snippet to every page of a site. The snippet can be taken from your google analytics account's admin page. Google changes things from time to time, at some point the code below is no longer valid but right now I have something like this:</p>
+<pre class="prettyprint">
+&lt;script&gt;
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'UA-00000000-0', 'auto');
+ga('send', 'pageview');
+&lt;/script&gt;
+</pre>
+<p>First the <code>ga</code> object is created in global scope. Then account is specified. Finally a page view is tracked.</p>
+<h4 id="whatswrong">What's wrong?</h4>
+<p>The main problem for single page apps is that they have only one page by their definition, therefore only first page view is tracked, all subsequent views are lost. In order to change this one have to cut the snippet above into three pieces. <code>ga</code> object creation code must be kept where it is now because we need this object anyways.</p>
+<p>Account binding is also should be performed once at the very beginning but I'm going to move it a bit.
+Last but not least, the page views tracking code needs to be called on every <code>$routeChangeSuccess</code> event.</p>
+<h4 id="analyticsmodule">Analytics module</h4>
+<p>I'm going to create yet another angular module to encapsulate tracking functionality:</p>
+<pre class="prettyprint">
+var siteAnalytics = angular.module("siteAnalytics", []);
+
+siteAnalytics.provider("analytics", function() {
+    var account;
+
+    this.setAccount = function(id) {
+        account = id;
+    };
+
+    this.$get = [
+        "$rootScope",
+        "$window", 
+        "$location", 
+        function($rootScope, $window, $location) {
+            $window.ga("create", account);
+            $rootScope.$on("$routeChangeSuccess", function() {
+                $window.ga('send', 'pageview', {'page': $location.path()});
+            });
+        }];
+});
+</pre>
+<p>A few things left: calling <code>setAccont</code> during app's config phase and registering the event handler by calling provider's <code>$get</code> method on app's run phase:</p>
+<pre class="prettyprint">
+var site = angular.module("site", ["siteAnalytics"]);
+
+site.config(["analyticsProvider", function(analyticsProvider) {
+    analyticsProvider.setAccount("UA-00000000-0");
+}]);
+
+site.run(["analytics", function(analytics) {
+}]);
+</pre>
+<h4 id="shouldicareaboutlocalhostpageviewstracking">Should I care about localhost page views tracking?</h4>
+<p>By default page views on localhost aren't tracked, so no worries - prod statistics won't be affected.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Other posts</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

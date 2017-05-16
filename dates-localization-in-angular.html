@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Локализация дат в Angular</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/dates-localization-in-angular.html" class="flag flag-ru"></a>
+                <a href="/en/dates-localization-in-angular.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/">
+                            <span id="me">Евгений Скурихин</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Простой код, который работает</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="dates-localization-in-angular" class="col-md-9">
+<header>
+<h2>Локализация дат в Angular</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-08-11</span>
+</header>
+<h4 id="angular">Почему бы не использовать встроенные в Angular возможности?</h4>
+<p>Давайте посмотрим, как в angular <a href="https://docs.angularjs.org/guide/i18n">можно локализовать контент</a>. Они предлагают задавать язык путем добавления на страницу соответствующую версию скрипта с локализацией. Можно немного поизвращаться, добавив логику для рендеринга нужного скриптового блока на сервере, но действительно ли мне нужно перезагружать страницу каждый раз при смене языка?</p>
+<p>Для локализации текста я использую <a href="https://github.com/angular-translate/angular-translate">angular-translate</a> и мне нравится как модуль переводит текст на лету. Я просто указываю, что переводить, задаю язык, и текст заменяется без перезагрузки страницы. Вот если бы я мог применить такой же подход для локализации дат... Что-нибудь наподобие <code>mysticalFormatter.format(myDate, \'ru\')</code>.</p>
+<h4 id="angulartranslate">Почему бы не использовать встроенные в angular-translate возможности?</h4>
+<p>Потому что я их не нашел. Кроме того, в действительности мои требования слишком специфичны, чтобы эффективно их удовлетворить при помощи сторонней библиотеки. Во-первых, мне нужны только два языка (английский и русский). Во-вторых, мне не нужны кучи различных форматов, по одному на каждый из языков вполне хватит. Следовательно, мне нужны локализованные наименования месяцев плюс две функции форматирования.</p>
+<p>Похоже, пришло время для изобретения велосипеда! Да будет так!</p>
+<h4 id="">Идея</h4>
+<p>Идея описана <a href="http://stackoverflow.com/questions/3552461/how-to-format-javascript-date">здесь</a>: храним месяцы в двух массивах - по одному на каждый язык и извлекаем наименования оттуда по индексу <code>date.getMonth() - 1</code>. Вот и все, последующие действия - лишь шелуха. Но не стоит ей пренебрегать, ведь Дьявол, как известно, в деталях.</p>
+<h4 id="angular-1">В стиле angular</h4>
+<p>Я создам отдельный angular модуль <code>siteFormatters</code> с одним единственным сервисом <code>dateFormatter</code>, чтобы инкапсулировать функционал, который мне понадобится для локализации дат.</p>
+<pre class="prettyprint">
+var formatter = angular.module("siteFormatters", []);
+formatter.service("dateFormatter", [ DateFormatter ]);
+
+function DateFormatter() {
+    var months = {
+        "en" : [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ],
+        "ru" : [ "Янв", "Фев", "Мар", "Апр", "Май", "Июн", 
+            "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек" ],
+    };
+
+    var formats = {
+        "en" : function(date) {
+            return getMonth(date, "en") + 
+                " " + date.getDate() + 
+                " " + date.getFullYear();
+        },
+        "ru" : function(date) {
+            return date.getDate() + 
+                " " + getMonth(date, "ru") + 
+                " " + date.getFullYear();
+        }
+    };
+
+    this.format = function(date, lang) {
+        return formats[lang](date);
+    };
+
+    function getMonth(date, lang) {
+        return months[lang][date.getMonth() - 1];
+    }
+}
+</pre>
+<h4 id="-1">Собственная директива</h4>
+<p>Чтобы обратиться к модулю форматирования из разметки, я создам директиву angular в том же самом модуле:</p>
+<pre class="prettyprint">
+formatter.directive("myDate", [ "dateFormatter", function(dateFormatter) {
+    return {
+        restrict: \'A\',
+        scope: {
+            date: \'=\',
+            lang: \'=\'
+        },
+        template: \'&lt;span class="date"&gt;{{localizedDate}}&lt;/span&gt;\',
+        link: function(scope, element, attrs) {
+            var date = new Date(scope.date);
+            scope.localizedDate = dateFormatter.format(date, scope.lang);
+        },
+        replace: true
+    };
+}]);
+</pre>
+<p>... и укажу ее в разметке:</p>
+<pre class="prettyprint">
+&lt;span data-date="post.published" data-lang="language" my-date&gt;&lt;/span&gt;
+</pre>
+<p>Считаю явное лучше неявного, (<a href="http://legacy.python.org/dev/peps/pep-0020/">привет, python</a>), поэтому я передаю дату и язык в директиву явно вместо того, чтобы использовать эти параметры из родительского скоупа неявно внутри директивы.</p>
+<p>В данном конкретном случае я не проверяю входные параметры: дату и язык, так как полностью контролирую места, из которых они приходят. Если там что-то не так, я хочу видеть проблему как можно скорее вместо того, чтобы прятать ее за дополнительными проверками.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Еще заметки</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

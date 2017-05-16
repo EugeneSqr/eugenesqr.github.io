@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Second Iteration Completed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/second-iteration-completed.html" class="flag flag-ru"></a>
+                <a href="/en/second-iteration-completed.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/en/">
+                            <span id="me">Eugene Skurikhin</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Simple code that works</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="second-iteration-completed" class="col-md-9">
+<header>
+<h2>Second Iteration Completed</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-08-13</span>
+</header>
+<h4 id="newfeatures">New features</h4>
+<p>I've just finished the second iteration of building my personal web site.</p>
+<ul>
+<li><a href="/en/dates-localization-in-angular.html">dates localization</a></li>
+<li>post listing paging</li>
+<li>server side storage optimization</li>
+<li><a href="/en/google-analytics-in-angular.html">google analytics</a></li>
+<li>default language changed to Russian</li>
+</ul>
+<h4 id="postponedtasks">Postponed tasks</h4>
+<ul>
+<li>old articles migration, because I decided to focus on new content and leave my old blog without changes</li>
+<li>automated spell checking, because the number of posts I write is relatively small; I should be able to handle spell checking with third party tools manually.</li>
+</ul>
+<h4 id="newiterationscope">New iteration scope</h4>
+<p>The site is fully functional and I like the way I can share my thoughts using it. Social features are still missing which is sad, but I'm ok with that (at least for some period of time).
+What is more important is that I finally got these books from Amazon:</p>
+<ul>
+<li><a href="http://www.amazon.co.uk/gp/product/020170353X">Accelerated C++: Practical Programming by Example</a></li>
+<li><a href="http://www.amazon.co.uk/gp/product/0321334876">Effective C++: 55 Specific Ways to Improve Your Programs and Designs</a></li>
+<li><a href="http://www.amazon.co.uk/gp/product/0201749629">Effective STL: 50 Specific Ways to Improve Your Use of the Standard Template Library</a></li>
+</ul>
+<p>so I'm going to spend some time studying them.</p>
+<p>Most likely my next post will be something around C++ :)</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Other posts</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

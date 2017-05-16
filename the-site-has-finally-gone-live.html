@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Наконец я зарелизил свой сайт!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/the-site-has-finally-gone-live.html" class="flag flag-ru"></a>
+                <a href="/en/the-site-has-finally-gone-live.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/">
+                            <span id="me">Евгений Скурихин</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Простой код, который работает</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="the-site-has-finally-gone-live" class="col-md-9">
+<header>
+<h2>Наконец я зарелизил свой сайт!</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-07-28</span>
+</header>
+<h4 id="">Наконец-то</h4>
+<p>Безмерно рад сообщить о первом релизе своего сайта! Хотя он пока не богат на функционал, это очень важная веха в моем развитии как разработчика.</p>
+<p>Все началось в 2012 году, когда я впервые начал выкладывать свои заметки в Интернет <a href="http://eskurikhin.blogspot.com">используя платформу blogspot</a>. Тогда я писал главным образом на около .net-ные темы и только на английском.</p>
+<p>Год назад я решил, что больше не хочу ограничивать себя лишь .net, что мне следует расширять свои знания за пределы экосистемы Microsoft. Я установил Linux и начал играться с Node, Mongo, Angular, JavaScript, C и vim.</p>
+<p>Пару месяцев назад я решился на проверку изученных навыков. К тому времени у меня было около 20 заметок в блоге, однако, я не был в восторге от самой платформы. Так я начал строить этот сайт в свободное время.</p>
+<p>В чем же заключаются главные особенности?</p>
+<h4 id="-1">Сайт работает быстро</h4>
+<ol>
+<li>Я умышленно использую небольшое количество зависимостей, чтобы иметь полное представление о том, что и как работает и быть готовым чинить любые проблемы без оглядки на ограничения сторонних библиотек.</li>
+<li>Я не добавляю то, что мне не нужно. То, что больше не нужно, выпиливается с корнем.</li>
+<li>Контент - главная составляющая этого сайта, потому я не использую <a href="http://en.wikipedia.org/wiki/WYSIWYG">"WYSIWYG"</a> редакторы, которые зачастую производят такой html, что без слез не взглянешь. Взамен я стараюсь сбалансировать удобство написания и чистоту разметки на выходе, используя <a href="http://daringfireball.net/projects/markdown/">markdown</a>.</li>
+</ol>
+<h4 id="-2">Этот сайт - на двух языках</h4>
+<p>Я поддерживаю две версии контента - английскую и русскую, плюс немного статики. Это означает, что:</p>
+<ol>
+<li>Я не стану играть в капитана очевидность или дублировать чужие статьи, ведь в этом случае мне придется переводить, а в дальнейшем поддерживать две версии текста. Это отличная мотивация полностью сосредоточиться на своем личном опыте.</li>
+<li>Мне приходится в два раза больше думать над тем, что я пишу. Как правило, это положительно сказывается на качестве текста (особенно орфографии :)).
+И, конечно, не стоит забывать, что английский - мой второй язык, следовательно, это хорошая возможность попрактиковаться в письменной речи. Если найдете проблемы в тексте (грамматика, пунктуация, стиль и т.д.), дайте, пожайлуйста, знать.</li>
+</ol>
+<h4 id="responsivedesign">Responsive design</h4>
+<p>Я использую bootstrap 3.0 + less для управления css. В итоге получается компактный код, который хорошо работает на большинстве устройств.</p>
+<h4 id="-3">Все инструменты и библиотеки бесплатные</h4>
+<p>Я использую:</p>
+<ul>
+<li>Linux Mint Debian Edition как ОС для разработки;</li>
+<li>vim - текстовый редактор;</li>
+<li>NodeJS, ExpressJS - бэкэнд; AngularJS - фронтэнд; Mongo - хранилище данных. JavaScript повсюду!</li>
+<li>разное: git, selenium, markdown, jasmine, bootstrap, less, bower и другое.</li>
+</ul>
+<p>Отсутствие проприетарного софта делает проект по-настоящему "своим".</p>
+<h4 id="-4">Дальнейшая разработка</h4>
+<p>Вот список того, чем я планирую заниматься в следующей итерации:</p>
+<ol>
+<li><a href="/ru/post/google-analytics-in-angular">Google analytics</a>;</li>
+<li>Пейджинг для страницы со списком заметок;</li>
+<li>Автоматизация проверки орфографии;</li>
+<li><a href="/ru/post/dates-localization-in-angular">Локализация дат на клиенте в angular;</a></li>
+<li>Улучшение внутренней струкруры хранилища для уменьшения дублирования контента между версиями для разных языков; </li>
+<li>Мирация следующей порции статей с blogspot.</li>
+</ol>
+<p>Надеюсь, вам понравится.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Еще заметки</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

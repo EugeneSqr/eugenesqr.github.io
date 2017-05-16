@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Selenium запрещает открывать ссылки в новой вкладке вместо нового окна в Firefox</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/selenium-forbids-opening-links-in-new-tab.html" class="flag flag-ru"></a>
+                <a href="/en/selenium-forbids-opening-links-in-new-tab.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/">
+                            <span id="me">Евгений Скурихин</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Простой код, который работает</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="selenium-forbids-opening-links-in-new-tab" class="col-md-9">
+<header>
+<h2>Selenium запрещает открывать ссылки в новой вкладке вместо нового окна в Firefox</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-07-18</span>
+</header>
+<h4 id="">Протестировать открытие новой вкладки? Не так быстро</h4>
+<p>Недавно я тестировал приложение при помощи Selenium WebDriver и заметил, что Firefox всегда открывает ссылки с атрибутом <code>target="_blank"</code> в новом окне. Я нашел способ изменить это поведение слегка поправив профиль FF:</p>
+<pre class="prettyprint">
+var options = new FirefoxProfile();
+options.SetPreference("browser.link.open_newwindow", 3);
+return new FirefoxDriver(options);
+</pre>
+<p>Вот что у меня получилось:</p>
+<pre>
+System.ArgumentException: Preference browser.link.open_newwindow may not be overridden: 
+frozen value=2, requested value=3
+</pre>
+<p>Печально, но факт. А вот и соответствующий <a href="http://selenium.googlecode.com/svn-history/r12174/trunk/java/client/src/org/openqa/selenium/firefox/FirefoxProfile.java">кусок кода</a>:</p>
+<pre class="prettyprint">
+/**
+* Profile preferences that are essential to the FirefoxDriver operating
+* * correctly. Users are not permitted to override these values.
+* */
+private static final ImmutableMap&lt;String, String&gt; FROZEN_PREFERENCES =
+ ImmutableMap.&lt;String, String&gt;builder()
+ .put("browser.link.open_newwindow", "2")
+</pre>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Еще заметки</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

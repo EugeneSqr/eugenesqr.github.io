@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Optimizing The Site</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/optimizing-the-site.html" class="flag flag-ru"></a>
+                <a href="/en/optimizing-the-site.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/en/">
+                            <span id="me">Eugene Skurikhin</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Simple code that works</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="optimizing-the-site" class="col-md-9">
+<header>
+<h2>Optimizing The Site</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-07-26</span>
+</header>
+<h4 id="whyoptimize">Why optimize?</h4>
+<p>I've finished the first iteration of building my personal web site; it means it's time to think about web optimization. What if I can keep things as they are now? Let's examine <a href="http://gtmetrix.com/">gtmetrix</a> results: </p>
+<p><img class="img-responsive thumbnail center-block" src="http://res.cloudinary.com/eugenesqr/image/upload/v1471942129/website-performance-optimization/gtmetrix-before-optimization.png" alt="Performance test results before optimization" /></p>
+<p>What a shame. I don't care much about "F" and "C" grades, but those digits to the right make me cry. I'm currently using free hosting at heroku so I can't demand super low response time from them. However the page size and the total number of requests have no excuse.</p>
+<h4 id="whatcanido">What can I do?</h4>
+<p>Well, here is the list:</p>
+<ol>
+<li>Minify static html, JavaScript, css files. Browsers don't care about indentation, spacing, naming and other stuff that humans use to bring clarity to their code. Why keeping it in production?</li>
+<li>Bundle minified files into logical groups and physically store them in as few files as possible to reduce number of requests. Modern browsers can download content from multiple sources simultaneously however the number of parallel requests is small. The number <a href="http://stackoverflow.com/questions/985431/max-parallel-http-connections-in-a-browser">varies from browser to browser</a>, but the general strategy is invariant: keep the number of requests low. The only thing to watch for is the amount of data that is transferred in each request, it shouldn't be too large.</li>
+<li>Compress the output with gzip. My first attempt described in <a href="/en/posts/selectively-gzipping-your-site">this post</a> however I'm going to show you a more advanced way to do it.</li>
+</ol>
+<h4 id="notsofast">Not so fast</h4>
+<p>The need for optimization creates some problems during development though. First it is tedious instantly compressing all files manually, some kind of automation is required. Second I prefer working with uncompressed files during development phase because I don't really like the idea of launching optimization routine after each minor change in JavaScript or html. Finally I don't want to push extra changes to my git repository. The ideal workflow I see is the following: develop stuff -&gt; push only not optimized code to dev repo -&gt; optimize it right before release -&gt; push to prod.</p>
+<h4 id="thesolution">The solution</h4>
+<p>I use two root directories for the site to solve the problem. I keep all not optimized files in "app" folder; during optimization these files are taken from there and placed inside nested directory called "public". Then all I have to do is to tell express what files to serve depending on configuration:</p>
+<pre class="prettyprint">
+var rootDir = (isProduction()) ? __dirname + "/app/public" : __dirname + "/app";
+   app.use(express.static(rootDir));
+   app.all("*", function(req, res, next) {
+       res.sendfile("index.html", { root: rootDir });
+});
+
+function isProduction() {
+    return process.env.NODE_ENV === "prod";
+}
+</pre>
+<h4 id="automatingtheoptimizationtasks">Automating the optimization tasks</h4>
+<p>The automation of optimization tasks above can be achieved in many ways; personally I prefer <a href="http://gruntjs.com/">gruntjs</a> - "The JavaScript Task Runner". It is free, it is simple and it has awesome modular architecture. If you aren't familiar with it I recommend you see their overview.</p>
+<h4 id="cssminification">CSS minification</h4>
+<p>I already use <a href="https://github.com/gruntjs/grunt-contrib-less">grunt-contrib-less</a> module for producing neat css for my site so it is only a matter of a single flag to make grunt minify it. Here is the corresponding task configuration in Gruntfile.js:</p>
+<pre class="prettyprint">
+less: {
+    development: {
+        options: { compress: false },
+            files: { "app/css/bootstrap.css": "themes/composite.less" }
+        },
+    production : {
+        options: { compress: true },
+            files: { "app/public/css/bootstrap.css.min": "themes/composite.less" }
+    }
+}
+</pre>
+<p>As you can see I have two environments here: development and production, so I can pick one when launching grunt.</p>
+<h4 id="javascriptminificationandbundling">JavaScript minification and bundling</h4>
+<p>JavaScript can be minified and bundled using <a href="https://github.com/gruntjs/grunt-contrib-uglify">grunt-contrib-uglify</a>.</p>
+<pre class="prettyprint">
+uglify : {
+    production: {
+        files: [{
+            "app/public/js/scripts.js.min": [
+                "bower_components/angular/angular.js",
+                "bower_components/angular-route/angular-route.js",
+                "bower_components/angular-animate/angular-animate.js",
+                "bower_components/angular-translate/angular-translate.js",
+                "bower_components/angular-resource/angular-resource.js",
+                "bower_components/angular-sanitize/angular-sanitize.js",
+                "app/js/main.js",
+                "app/js/translations.js",
+                "app/js/routes.js",
+                "app/js/controllers.js",
+                "app/js/services.js",
+                "app/js/directives.js" ]
+        }]
+    }
+}
+</pre>
+<p>I have only one environment here because I don't minify code during development. All JavaScript code I have so far is bundled into one file called <code>scripts.js.min</code> and placed inside <code>public/js</code> folder.</p>
+<h4 id="htmlminification">Html minification</h4>
+<p>I need yet another module to minify static html files called <a href="https://github.com/gruntjs/grunt-contrib-htmlmin">grunt-contrib-htmlmin</a>.</p>
+<pre class="prettyprint">
+htmlmin : {
+    production: {
+        options: {
+            removeComments: true,
+            collapseWhitespace: true
+        },
+        files: {
+            "app/public/index.html.min": "app/index.html.prod",
+
+            "app/public/partials/post-detail.html.min": 
+                "app/partials/post-detail.html",
+
+            "app/public/partials/post-listing.html.min": 
+                "app/partials/post-listing.html"
+
+            "app/public/partials/404.html.min": 
+                "app/partials/404.html"
+        }
+    }
+}
+</pre>
+<p>I treat each html file separately because there are few of them. There must be some kind of wildcards to specify entire set of files. Probably I'll come back to this later if needed.</p>
+<p>Pay attention to the first pair of files: I'm taking <code>app/index.html.prod</code> and minify it to <code>app/public/index.html.min</code>. What's the index.html.prod for? I need to specify the different set of scripts on production as they are bundled into one file; so I have to maintain two entry points. That's bad in general, but I'm not going to change <code>index.html</code> often so it shouldn't be a problem in this particular case.</p>
+<h4 id="compression">Compression</h4>
+<p>I'm almost there, <a href="https://github.com/gruntjs/grunt-contrib-compress">grunt-contrib-compress</a> can help me out with compression.</p>
+<pre class="prettyprint">
+compress : {
+    production : {
+        options: { mode: "gzip", level: 9 },
+        files : [
+            { 
+                expand: true, 
+                src: "app/public/css/bootstrap.css.min",
+                dest: "",
+                ext: ".css" 
+            },
+            { 
+                expand: true,
+                src: "app/public/js/scripts.js.min",
+                dest: "",
+                ext: ".js" 
+            },
+            {
+                expand: true,
+                src: "app/public/partials/*.html.min",
+                dest: "", ext: ".html" 
+            },
+            {
+                expand: true,
+                src: "app/public/index.html.min",
+                dest: "",
+                ext: ".html" 
+            },
+            {
+                expand: true,
+                src: "app/public/js/prettify/*.js.min",
+                dest: "",
+                ext: ".js" 
+            },
+            {
+                expand: true,
+                cwd: "app",
+                src: "fonts/*",
+                dest: "app/public/" 
+            },
+            {
+                expand: true,
+                cwd: "app",
+                src: "img/*",
+                dest: "app/public/" 
+            }
+        ]
+    }
+}
+</pre>
+<p>The configuration is almost self-explanatory. The only gotcha here is that the module can't compress file and replace itself. Instead I'm taking minified files marked with the .min extension and compress them into different files ripping off the ".min" tail.</p>
+<h4 id="cleanup">Cleanup</h4>
+<p>The final step. All the *.min files should be removed simply because I don't want them to be there anymore :) <a href="https://github.com/gruntjs/grunt-contrib-clean">grunt-contrib-clean</a> comes into play.</p>
+<pre class="prettyprint">
+clean: [ "app/public/**/*.min" ]
+</pre>
+<h4 id="alltogether">All together</h4>
+<p>The final pipeline for dev (default) and prod configurations:</p>
+<pre class="prettyprint">
+grunt.registerTask(
+    "default",
+    [ "jshint", "less:development" ]);
+
+grunt.registerTask(
+    "prod",
+    [ "less:production", "uglify", "htmlmin", "compress", "clean" ]);
+</pre>
+<h4 id="wasitworthit">Was it worth it?</h4>
+<p>Now I can change my heroku configuration: <code>heroku config:set NODE_ENV="prod"</code> and launch gtmetrix test once again.</p>
+<p><img class="img-responsive thumbnail center-block" src="http://res.cloudinary.com/eugenesqr/image/upload/v1471942128/website-performance-optimization/gtmetrix-after-optimization.png" alt="Performance test results afrer optimization" /></p>
+<p>Visitors have to download almost ten times less data; page load time is halved! Was it worth it? Absolutely.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Other posts</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

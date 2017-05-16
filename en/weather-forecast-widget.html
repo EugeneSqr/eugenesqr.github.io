@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Creating Weather Forecast Widget Using Node.js And Redis</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/weather-forecast-widget.html" class="flag flag-ru"></a>
+                <a href="/en/weather-forecast-widget.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/en/">
+                            <span id="me">Eugene Skurikhin</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Simple code that works</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="weather-forecast-widget" class="col-md-9">
+<header>
+<h2>Creating Weather Forecast Widget Using Node.js And Redis</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-01-31</span>
+</header>
+<h4 id="whatweregoingtobuild">What we're going to build</h4>
+<p>In this post I'm going to describe a process of creating a simple weather forecast widget. I'm going to use Redis as a persistance mechanism, Node.js + Express with Mustache template engine as a foundation for web interface; and a module based on Cairo called "node canvas" for generating images serverside.</p>
+<h4 id="weatheraggregator">Weather aggregator</h4>
+<p>First we need to retrieve raw weather forecast data, parse it, generate images "on the fly" and persist them to Redis. Let's keep these pieces of functionality in a first app called "weather-aggregator". It's going to be a simple console app that can be triggered in a shell script with a certain time interval. <a href="http://www.yandex.ru/">Yandex</a> weather forecast service looks nice to me so I'm going to use it.</p>
+<p>Let's take a look at package.json to see the list of dependencies:</p>
+<ul>
+<li><a href="https://github.com/mikeal/request">request</a> - for getting data from service;</li>
+<li><a href="https://github.com/Leonidas-from-XIV/node-xml2js">xml2js</a> - for XML parsing;</li>
+<li><a href="https://github.com/learnboost/node-canvas">canvas</a> - for generating images;</li>
+<li><a href="https://github.com/mranney/node_redis">redis</a> - guess what :)</li>
+</ul>
+<p>In order to install node canvas you have to <a href="http://cairographics.org/download/">install Cairo</a> first. You might need to update some of dev libraries. A friend of mine simply installed the <a href="http://releases.ubuntu.com/saucy/">latest ubuntu (13.10)</a> to solve the problem.</p>
+<p>All code can be found in the following <a href="https://github.com/EugeneSqr/weather-widget/">github repo</a>. Here I'm going to focus on high level overview and problems I had. The app.js kicks off the aggregation process. Three asynchronous requests are sent to the weather forecast service: one per each city I'm interested in. In the callbacks I use my extractor.js module to convert incoming XML to JavaScript objects and pick only the data I need. Then the "imagebuilder" module generates the corresponding images and finally the storage module persists binary data to redis server. The whole process is straightforward the only thing to keep an eye on is the usage of contexts. Because of asynchronous nature of Node.js you have to create multiple instances of the helpers (each one with its own context). This will prevent you from weird stuff like drawing on a single canvas multiple times.</p>
+<h4 id="widgetgenerator">Widget-generator</h4>
+<p>Now when we have all required data from weather service collected, processed and stored as binary it's time to display it. That's what widget-generator for. As before let's examine packages.json first:</p>
+<ul>
+<li>redis - we have to retrieve data from the storage</li>
+<li><a href="http://expressjs.com/guide.html">express</a> - foundation for building web interfaces on Node.js</li>
+<li><a href="https://npmjs.org/package/mustache-express">mustache-express</a> - for easy integration of <a href="http://mustache.github.io/">mustache</a> template engine into express.</li>
+</ul>
+<p>The only difficulty I had here was connected with retrieving images from Redis. Luckily <a href="https://groups.google.com/forum/#!topic/nodejs/VQKL4aW_otA">this post</a> solved my problem. As I said earlier I'm not going to describe any implementation details here: just clone the repo and find out everything you need.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Other posts</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Coloring Your Git Branch Name</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/color-git-branch-name-in-bash-prompt.html" class="flag flag-ru"></a>
+                <a href="/en/color-git-branch-name-in-bash-prompt.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/en/">
+                            <span id="me">Eugene Skurikhin</span>
+                            <span class="glyphicon glyphicon-link"></span>
+                            <span id="tagline">Simple code that works</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="color-git-branch-name-in-bash-prompt" class="col-md-9">
+<header>
+<h2>Coloring Your Git Branch Name</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2014-01-24</span>
+</header>
+<h4 id="desiredeffect">Desired Effect</h4>
+<p>If you use git often then you might find helpful having current branch name right in the command prompt. Highlighting "dirty" branches is also a good thing.</p>
+<h4 id="entrypoint">Entry Point</h4>
+<p>I started tweaking my bash prompt by reading <a href="http://mediadoneright.com/content/ultimate-git-ps1-bash-prompt">this article</a>; a lot of interesting tricks were described there. Unfortunately there were too much for me, I needed a more simpler solution with less text on screen (and in configs). So I came up with the following script:</p>
+<pre class="prettyprint">
+Red="\[\033[1;31m\]"
+Green="\[\033[1;32m\]"
+Reset="\[$(tput sgr0)\]"
+
+export PS1='$(git branch &>/dev/null;\
+if [ $? -eq 0 ]; then \
+    echo "$(echo `git status` | grep "nothing to commit" > /dev/null 2>&1; \
+    if [ "$?" -eq "0" ]; then \
+        echo "'$Green'"$(__git_ps1 "%s")"'$Reset'"; \
+    else \
+       echo "'$Red'"$(__git_ps1 "%s")"'$Reset'"; \
+    fi) "; \
+fi)'$PS1
+</pre>
+<h4 id="whatsgoingon">What's going on</h4>
+<p>I kept existing $PS1 variable prepending branch name and got the following result:</p>
+<p><img class="img-responsive thumbnail center-block" src="http://res.cloudinary.com/eugenesqr/image/upload/v1471941865/color-git-branch-name/git-bash.png" alt="Git Bash Ubuntu 13.04" /></p>
+<p>When the folder does not contain a git repo nothing is prepended. A "Dirty" master branch of the "dotfiles" repo is highlighted. The "weather-widget" repo's master branch with no changes isn't highlighted.</p>
+<h4 id="compatibility">Compatibility</h4>
+<p>Works fine on Ubuntu 13.04 with force<em>color</em>prompt=yes uncommented in my .bashrc file. But what about cygwin? First time I applied the script there I got an error:</p>
+<pre class="prettyprint">
+__git_ps1 command not found
+</pre>
+<p>I managed to solve this by placing <a href="https://raw.github.com/git/git/master/contrib/completion/git-prompt.sh">git-prompt.sh</a> in my home directory and loading it before the main script above.</p>
+<pre class="prettyprint">
+source ~/git-prompt.sh
+</pre>
+<p>In cygwin it looks a bit awkward because of default prompt format; but imho still ok.</p>
+<p><img class="img-responsive thumbnail center-block" src="http://res.cloudinary.com/eugenesqr/image/upload/v1471941865/color-git-branch-name/bash-cygwin.png" alt="Git Bash Cygwin" /></p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Other posts</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>
