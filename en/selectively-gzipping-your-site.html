@@ -40,7 +40,7 @@
 </header>
 <h4 id="motivation">Motivation</h4>
 <p>I decided to build my personal web site. The key idea was to keep things as simple and fast as possible while sticking with modern cool techniques like SPA and MVVM.</p>
-<p>I picked the Node + Angular + MongoDB combo as a foundation and started hacking. Soon I realized that I need some data compression to keep things really small.',</p>
+<p>I picked the Node + Angular + MongoDB combo as a foundation and started hacking. Soon I realized that I need some data compression to keep things really small.</p>
 <h4 id="thealternatives">The alternatives</h4>
 <p>Basically I had two options: </p>
 <ul>
@@ -99,7 +99,7 @@ var port = process.env.PORT || 8080;
 app.listen(port);
 console.log("Express started on port " + port);
 </pre>
-<p>I prepended every gzipped file extension with "gzip" and added some logic for analyzing request urls and adding the "Content-Encoding" header where needed... and it started working.\n\n' +</p>
+<p>I prepended every gzipped file extension with "gzip" and added some logic for analyzing request urls and adding the "Content-Encoding" header where needed... and it started working.</p>
 <p>Now I gzip all static files, rename them and voila. But what about files that are changed often during development? Well, a dedicated <a href="http://gruntjs.com/">grunt</a> task is needed, but still it is a good start.</p>
 </article>
 <section id="sidebar" class="col-md-3 visible-md visible-lg">

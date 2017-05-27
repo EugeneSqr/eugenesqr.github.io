@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Minimalistic Approach For Creating Personal Website</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/minimalistic-approach-for-creating-personal-website.html" class="flag flag-ru"></a>
+                <a href="/en/minimalistic-approach-for-creating-personal-website.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/en/">
+                            <span id="me">Eugene Skurikhin</span>
+                            <span class="icon-link"></span>
+                            <span id="tagline">Simple code that works</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="minimalistic-approach-for-creating-personal-website" class="col-md-9">
+<header>
+<h2>Minimalistic Approach For Creating Personal Website</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2016-05-17</span>
+</header>
+<h4 id="yearsgoby">Years Go By</h4>
+<p>Following mainstream practices gets replaced by pragmatism and maintenance costs reduction. New experience forced me to rethink my attitude to this site. Let me outline the major ideas below.</p>
+<h4 id="singlepagedesignisntneeded">Single Page Design Isn't Needed</h4>
+<p>The main advantages of SPA are responsive user interface and simplified state management. If webpages look the same, single page application allows downloading the template once and then reusing it.</p>
+<p>The main downsides are SEO and need for extra libraries to control routing and history. If one follows modern techniques, he/she will most likely end up with one of the popular frameworks (Angular, Amber, React, Aurelia etc.).</p>
+<p>For a simple website user interface responsiveness isn't that important, because user interactions are rare. State management is not a problem due to the same reason. The amount of content related to everything else on the page is typically high, therefore webpages differ from each other significantly.</p>
+<p>On the other hand, site ranking in search engines is very important. Posts are written for people, it makes no sense to write something if nobody can find and read it.</p>
+<p>Modern single page frameworks are heavy compared to the size of content.</p>
+<p>Maintenance costs matter. Technologies evolve fast, one has to keep an eye on them, even if he/she is busy with things other than web.</p>
+<h4 id="backendanddatabasearentneeded">Back End And Database Aren't Needed</h4>
+<p>Back end is typically used to perform operations that can't be handled on front end due to security or performance reasons. This logic is absent on a personal website.</p>
+<p>Back end code has to be executed somewhere, one has to pay for that. It is possible to do it for free using services like <a href="https://heroku.com">heroku</a> or <a href="https://appharbor.com">app harbor</a>. However these services tend to suspend your execution process when it's inactive for some period of time. Waking up the process again takes up to 10 seconds.</p>
+<p>Database is used to store and query content. How about storing it in files instead? The results of all possible queries can be stored in files as well.</p>
+<p>For example the list of all posts can be build beforehand, all required metadata (id, creation date, header etc.) is attached and saved to a file on server. Client only needs to request and process the file.</p>
+<h4 id="staticwebsite">Static website</h4>
+<p>That's how static websites are born. No need to store HTML, plain text is better due to readability. The markup has to be built from it automatically. Here are the main advantages of this approach:</p>
+<ul>
+<li>text files can be edited in the best editor – the one you're using every day. Scripts, macros, syntax highlight are included. No need to install extra packages and get yourself familiar with them;</li>
+<li>content management is done by operating system. One creates, renames, deletes files and folders. Again only familiar tools are used, nothing is added to the system;</li>
+<li>page caching is "just works", invalidation occurs when file contents change;</li>
+<li>no need to update your code to fit a framework update;</li>
+<li>release procedure is simple as copying the files.</li>
+</ul>
+<h4 id="buildsystemgulpversusgrunt">Build System. Gulp Versus Grunt</h4>
+<p>I've been using Grunt for ages, it does its job well. Why replacing it?</p>
+<p>A few decades ago very smart people invented pipes in Unix. They used them as glue between small specialized modules. The solution was very successful, it is still in use on all modern operating systems.</p>
+<p>As an alternative approach one could save intermediary results somewhere and use them in other modules. This is less effective, the intermediary results has to be cleaned up eventually. But why creating garbage in first place?</p>
+<p>Suppose you need to find something in current directory. You could get its contents and save it to a temporary file, then search the file's contents and finally delete the file:</p>
+<pre class="prettyprint">
+ls ~ > contents
+grep "text-to-find" contents
+rm contents
+</pre>
+<p>Same thing can be done using pipes:</p>
+<pre class="prettyprint">
+ls ~ | grep "text-to-find"
+</pre>
+<p>Gulp made a great job implementing pipes in JavaScript and got me on its side.</p>
+<h4 id="reactiveviews">Reactive Views</h4>
+<p>Reactive view is a representation of a model, that refreshes its state when the state of model changes (one-way data-binding). Reactive view is capable of updating the model, when its own state changes (two-way data-binding). Reactive frameworks are useful but heavy. For example the latest version of <a href="http://knockoutjs.com">Knockout</a> takes 25 Kb.</p>
+<p>When building a personal website, one usually needs one-way binding applied only once when page first loads. Server serves data (model), page accepts it and "inflates" itself by creating new DOM elements.</p>
+<p>New elements can be created with jQuery (redundant) or with pure JavaScript (code bloat). What if create the elements using CSS selectors? Their syntax is neat and widely used, <a href="https://github.com/kriszyp/put-selector">the library</a> is lightweight.</p>
+<p>Here is how posts list filling looks like:</p>
+<pre class="prettyprint">
+import { getAsync } from "./resource.js"
+import { assertArray, assertObject } from "./assert.js"
+import put from "put-selector"
+import markdown from "showdown"
+
+export class ListViewModel {
+    inflate() {
+        getAsync("post-headers.json").then(
+            posts => {
+                assertArray(posts, "posts headers must be an array");
+
+                posts.reverse().forEach(post => {
+                    let listElement = document.getElementById("post-listing");
+                    assertObject(listElement, "post listing root element does not exist");
+
+                    let postElement = put(listElement, "li");
+                    let postHeaderElement = put(postElement, "header");
+                    put(
+                        postHeaderElement,
+                        "a[href='" + post.url + "'] h2",
+                        post.title);
+                    put(postHeaderElement,
+                        "span.glyphicon.glyphicon-time.date");
+
+                    put(postHeaderElement,
+                        "span.date",
+                        ` ${post.dateCreated}`);
+                    put(
+                        postElement,
+                        "div",
+                        { innerHTML: new markdown.Converter().makeHtml(post.header) });
+                });
+            },
+            error => {
+                console.log("error getting model", error);
+            });
+    }
+}
+</pre>
+<p>The module can be loaded from main page:</p>
+<pre class="prettyprint">
+"use strict";
+System.import("source/view/js/listViewModel.js").then(function(m) {
+    var viewModel = new m.ListViewModel();
+    viewModel.inflate();
+});
+</pre>
+<h4 id="youmightnotneedjquery">You Might Not Need jQuery</h4>
+<p>The code above illustrates another important concept - getting rid of jQuery due to its weight. Every page on my site downloads 130 Kb on average. Without IE 11 support it's even less. The latest jQuery version takes 32 Kb. I don't see a valid reason to make the project one-fourth heavier right from the start.</p>
+<p>Some say these 32 Kb will most likely be in a browser's cache when the site is about to load. This is due to high popularity of the library and its wide spread over Content Delivery Networks. Start using multiple browsers in incognito mode and this advantage will fade away. 32 Kb is 32 Kb, period.</p>
+<h4 id="hosting">Hosting</h4>
+<p>Static site can be hosted by anyone, any HTTP server is capable of serving files. In my opinion <a href="https://pages.github.com">GitHub pages</a> is an optimal choice here. I've been storing my code in GitHub for a long time, their reliability and accessibility is unquestionable for me. Release procedure - committing to the master branch of a dedicated repository - is easy to script. The service is free, and that's awesome.</p>
+<h4 id="wrapup">Wrap Up</h4>
+<p>One should not apply common approaches for building large corporate applications to personal website. This task is far more simple, there is a good opportunity for experiments. Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Other posts</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+</body>
+</html>
