@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Задачи Gulp для создания статического сайта</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/gulp-tasks-for-creating-static-website.html" class="flag flag-ru"></a>
+                <a href="/en/gulp-tasks-for-creating-static-website.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/">
+                            <span id="me">Евгений Скурихин</span>
+                            <span class="icon-link"></span>
+                            <span id="tagline">Простой код, который работает</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="gulp-tasks-for-creating-static-website" class="col-md-9">
+<header>
+<h2>Задачи Gulp для создания статического сайта</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2017-06-13</span>
+</header>
+<h4 id="">Хранение данных</h4>
+<p>Прежде чем описывать манипуляции с данными, которые приводят к появлению готовой разметки, нужно понять, как эти данные хранить. В предыдущей статье были высказаны аргументы в пользу простого текста в текстовых файлах. Какую структуру каталогов выбрать? </p>
+<p>Очевидным шагом будет отделение содержимого сайта от его представления. Потому содержимое и представление размещено в двух каталогах: "model" и "view" соответственно. Далее речь пойдет об устройстве "model".</p>
+<pre>
+$ tree source/model/ -L 2 | sed 6q
+source/model/
+├── localizable-strings.json
+└── posts
+    ├── 2014-01-24 color-git-branch-name-in-bash-prompt
+    ├── 2014-01-31 weather-forecast-widget
+    ├── 2014-04-22 making-ie-bho-enabled-by-default
+</pre>
+<h4 id="-1">Интернационализация</h4>
+<p>Файл <code>localizable-strings.json</code> хранит строки, не относящиеся к конкретной заметке, а скорее к сайту в целом: </p>
+<pre class="prettyprint">
+{
+    "author": {
+        "ru": "Евгений Скурихин",
+        "en": "Eugene Skurikhin"
+    },
+    "about": {
+        "author": {
+            "header": {
+                "ru": "Об авторе",
+                "en": "About the Author"
+</pre>
+<p>С помощью этого файла и нехитрого преобразования можно построить объект, содержащий именованные строки на выбранном языке. Затем, используя имена, подставить строки в разметку.</p>
+<p>Вот так выглядит модуль, ответственный за преобразование:</p>
+<pre class="prettyprint">
+exports.getStrings = language => {
+    let strings = JSON.parse(
+        fs.readFileSync("./source/model/localizable-strings.json", "utf8"));
+
+    localizeStrings(strings, language);
+    return strings;
+};
+
+function localizeStrings(currentObject, language) {
+    for(let propertyName in currentObject) {
+        if (currentObject.hasOwnProperty(propertyName)) {
+            if (currentObject[propertyName].hasOwnProperty(language)) {
+                currentObject[propertyName] = currentObject[propertyName][language];
+            } else {
+                localizeStrings(currentObject[propertyName], language);
+            }
+        }
+    }
+}
+</pre>
+<p>А так – получаемый JavaScript объект:</p>
+<pre class="prettyprint">
+{ 
+    author: 'Eugene Skurikhin',
+    about: { 
+        author: { 
+            header: 'About the Author',
+</pre>
+<p>О том, как его использовать, будет рассказано далее.</p>
+<h4 id="-2">Заметки, структура данных</h4>
+<p>Теперь обратимся к заметкам. Все они имеют одинаковую структуру, возьмем для примера самую первую:</p>
+<pre>
+$ lt source/model/posts/2014-01-24\ color-git-branch-name-in-bash-prompt/
+source/model/posts/2014-01-24 color-git-branch-name-in-bash-prompt/
+├── Coloring Your Git Branch Name.en.md
+├── cygwin-config-fix.sh
+├── cygwin-error-message.txt
+├── meta.json
+├── prompt-configuration.sh
+└── Раскрашиваем ветку Git в терминале.ru.md
+</pre>
+<p>Заметка состоит из нескольких файлов, все они хранятся в каталоге с именем, составленным по принципу:</p>
+<pre>&lt;дата публикации&gt; &lt;идентификатор&gt;</pre>
+<p>Дата публикации в формате ISO без времени. Это снимает региональные особенности (месяц – перед днем в Америке, в Европе и России – наоборот), а так же обеспечивает хронологический порядок в случае простой сортировки каталогов по имени.</p>
+<p>Поначалу кажется заманчивым брать дату из свойств каталога. Идея неудачная, так как Unix хранит три типа дат для каждого каталога: дату последнего доступа, дату последней модификации содержимого и дату обновления свойств. Ни одна из указанных дат не подходит (вспомним, что заметка написана в 2014 году): </p>
+<pre>
+$ stat source/model/posts/2014-01-24\ color-git-branch-name-in-bash-prompt/ 
+  File: source/model/posts/2014-01-24 color-git-branch-name-in-bash-prompt/
+  Size: 232             Blocks: 0          IO Block: 4096   directory
+Device: 808h/2056d      Inode: 136732054   Links: 2
+Access: (0755/drwxr-xr-x)  Uid: ( 1000/eugenesqr)   Gid: (  100/   users)
+Access: 2017-06-14 11:14:48.813876233 +0300
+Modify: 2017-05-17 10:39:57.912851285 +0300
+Change: 2017-05-17 10:39:57.912851285 +0300
+ Birth: -
+</pre>
+<p>Некоторые файловые системы хранят дату создания, однако в общем случае она не доступна.</p>
+<p>Идентификатор – строка латиницей, которая перекликается с названием заметки на английском. Можно использовать GUID, чтобы гарантировать уникальность, однако при этом будет утеряна смысловая нагрузка, уменьшится удобство работы с каталогом. Простая строка не гарантирует уникальности, но с высокой вероятностью будет таковой, так как заметки редко публикуются с одинаковыми именами.</p>
+<p>Основной текст заметок хранится в формате <a href="https://daringfireball.net/projects/markdown/syntax">markdown</a> в файлах с расширением md. Этих файлов для каждой заметки минимум два – по количеству поддерживаемый языков.</p>
+<p>Формат наименования этих файлов следующий:</p>
+<pre>&lt;заголовок заметки&gt;.&lt;аббревиатура использованного языка&gt;.md</pre>
+<p>Посмотрим какие атрибуты заметки у нас уже есть:</p>
+<ul>
+<li>идентификатор;</li>
+<li>заголовок;</li>
+<li>дата создания;</li>
+<li>содержимое;</li>
+<li>аббревиатура языка.</li>
+</ul>
+<p>Вот то, что необходимо еще:</p>
+<ul>
+<li>относительный URL;</li>
+<li>тэги;</li>
+<li>URL картинки для заголовка.</li>
+</ul>
+<p>URL можно построить, используя уже имеющиеся атрибуты:</p>
+<pre>/&lt;аббревиатура языка&gt;/&lt;идентификатор&gt;</pre>
+<p>Тэги и URL картинки будем хранить в файле <code>meta.json</code>.</p>
+<p>Все остальные файлы в каталоге – фрагменты, встраиваемые в основной текст заметки. Такое разделение имеет смысл по двум причинам.</p>
+<p>Во-первых, фрагменты являются общими для всех языков – это код, вывод программ или просто данные. Их дублирование – прямое нарушение принципа <a href="https://ru.wikipedia.org/wiki/Don%E2%80%99t_repeat_yourself">"не повторяйся"</a>.</p>
+<p>Во-вторых, расширение этих файлов дает подсказку об их содержимом. Это позволяет редактировать их максимально эффективно с использованием соответствующей подсветки синтаксиса.</p>
+<h4 id="-3">Построение страниц с заметками</h4>
+<p>Теперь посмотрим как выглядит код, строящий готовые страницы с заметками. Код разбит на модули, каждый из которых выполняет свою работу на определенном уровне абстракции. Начнем сверху – с модуля, который отвечает за построение страниц и непосредственно вызывается в задаче gulp.</p>
+<pre class="prettyprint">
+exports.assemblePosts = () => {
+    return gulp.src([ "./source/model/posts/**/*.md" ])
+        .on("data", file => {
+            let preprocessed = preprocessor.preprocess(
+                fs.readFileSync("./source/view/index.master"), 
+                modelFactory.createPostPageModel(file));
+
+            file.contents = new Buffer(preprocessed, "utf-8");
+        })
+        .pipe(rename(path => {
+            path.basename = utility.getBasePath(utility.getLanguage(path.basename)) + 
+                utility.splitPostLocation(path.dirname).id;
+            path.dirname = "";
+            path.extname = ".html";
+        }))
+        .pipe(gulp.dest("./dist"));
+};
+</pre>
+<p>На входе имеем все файлы с основным текстом заметок. Для каждого файла происходит построение модели страницы заметки (вызов <code>modelFactory.createPostPageModel</code>) и ее наложение на разметку при помощи <a href="https://www.npmjs.com/package/preprocess">preprocess</a>. Получившийся HTML файл складывается в выходной каталог, который имеет следующую структуру:</p>
+<pre>
+$ lt dist | sed 4q
+dist
+├── color-git-branch-name-in-bash-prompt.html
+├── en
+│   ├── color-git-branch-name-in-bash-prompt.html
+</pre>
+<p>Иными словами, заметки на русском попадают в корень (русский – язык по-умолчанию), заметки на английском – с тем же именем остаются в подкаталоге "en".</p>
+<p>Идем на уровень ниже и разберем работу <code>modelFactory.createPostPageModel</code>.</p>
+<pre class="prettyprint">
+exports.createPostPageModel = file => {
+    const postModel = createPostModel(file);
+
+    return Object.assign(
+        localizer.getStrings(postModel.language),
+        {
+            pageTitle: postModel.title,
+            basePath: utility.getBasePath(postModel.language),
+            language: postModel.language,
+            partials: { frame: "post" },
+            post: postModel,
+            url: buildPageUrls(postModel.language, postModel.id)
+        });
+};
+</pre>
+<p>Сначала строится модель заметки, затем она вкладывается в модель страницы заметки вместе с локализованными строками и несколькими дополнительными атрибутами. </p>
+<p>Про построение URL из аббревиатуры языка и идентификатора было сказано выше, интернационализация тоже уже обсуждалась. Здесь стоит добавить, что URL на самом деле два – по количеству языков, и оба включаются в модель страницы, чтобы иметь возможность язык менять. Осталось разобрать модель заметки.</p>
+<pre class="prettyprint">
+function createPostModel(file) {
+    const post = extractAttributesFromLocation(file.path);
+
+    // Insert code blocks
+    const contents = preprocessor.preprocess(
+        file.contents.toString(),
+        {},
+        {
+            srcDir: path.dirname(file.path)
+        });
+
+    post.body = new markdown.Converter().makeHtml(contents);
+
+    return post;
+}
+</pre>
+<p><code>extractAttributesFromLocation</code> извлекает атрибуты из имен файла заметки и содержащего ее каталога. Далее при помощи <code>preprocess</code> происходит вставка блоков текста, общих для всех языков. Наконец, содержимое заметки преобразуется из markdown в HTML при помощи <a href="https://github.com/showdownjs/showdown">showdown</a>.</p>
+<h4 id="-4">Построение страницы со списком</h4>
+<p>Список заметок – это множество заголовков заметок, упорядоченных по дате публикации в обратном порядке. Под заголовком следует понимать название заметки с несколькими первыми абзацами основного текста. В отличие от станицы с заметкой, ее содержимое более динамично, возможны варианты с фильтрацией, постраничным выводом, анимацией и так далее. Индексирование поисковым роботом особого значения не имеет.</p>
+<p>Все это наводит на мысль о возможности динамической загрузки списка. В модели страницы он отсутствует, его генерация происходит отдельно, а выдается он в результате дополнительного AJAX запроса. Модель страницы-списка становится очень похожа на модель страницы заметки, поэтому рассматривать отдельно мы ее не будем.</p>
+<h4 id="-5">Построение списка заголовков</h4>
+<p>Список будет запрашиваться через AJAX, поэтому имеет смысл хранить его в файле в формате JSON, чтобы преобразование в JavaScript объект было максимально простым. Заметки могут содержать различное количество абзацев в заголовке, это число нужно хранить отдельно. Уже упомянутый <code>meta.json</code> для этого отлично подходит.</p>
+<pre class="prettyprint">
+{
+    "tags": [ "gulp" ],
+    "header": {
+        "numberOfParagraphs": 2,
+        "cover": ""
+    }
+}
+</pre>
+<p>Код, ответственный за построение списка, находится все в том же модуле, который стоил другие модели:</p>
+<pre class="prettyprint">
+exports.createPostHeaderModel = file => {
+    let post = extractAttributesFromLocation(file.path);
+    const meta = readMeta(file.path);
+    post.tags = meta.tags;
+    post.header = getFirstParagraphs(
+        file.contents.toString("utf8"),
+        meta.header.numberOfParagraphs);
+
+    post = Object.assign(
+        post,
+        {
+            url: buildPageUrl(post.language, post.id)
+        });
+
+    // Remove extra fields to save bandwidth
+    delete post.language;
+
+    return post;
+};
+</pre>
+<p>Сначала мы точно так же считываем атрибуты заметки из названия ее файла и файла родительского каталога. Далее считываем и обрабатываем метаданные, чтобы извлечь количество абзацев, необходимых для заголовка: </p>
+<pre class="prettyprint">
+function readMeta(postFileLocation) {
+    const meta = JSON.parse(
+        fsUtilities.getTextContents(
+            path.dirname(postFileLocation) + "/meta.json"));
+    assert.objectNotNull(meta, "post meta is missing for " + postFileLocation);
+
+    return meta;
+};
+</pre>
+<p>Наконец, считываем указанное количество абзацев:</p>
+<pre class="prettyprint">
+function getFirstParagraphs(fileContents, numberOfParagraphs) {
+    assert.condition(!isNaN(numberOfParagraphs), "number of paragraphs must be a numeric value");
+    assert.condition(numberOfParagraphs > 0, "number of paragraphs must be positive");
+
+    let paragraphsRead = 0;
+    let lastBlankLinePosition = 0;
+    const separator = os.EOL + os.EOL;
+    while (paragraphsRead < numberOfParagraphs && lastBlankLinePosition < fileContents.length) {
+        lastBlankLinePosition = fileContents.indexOf(separator, lastBlankLinePosition) + 1;
+        paragraphsRead++;
+    }
+
+    return fileContents.substring(0, lastBlankLinePosition - 1);
+};
+</pre>
+<h4 id="-6">Собираем все вместе</h4>
+<p>Вот так выглядит задача gulp для сборки всех страниц на сайте:</p>
+<pre class="prettyprint">
+const gulp = require("gulp");
+const pageAssembler = require("./build/page-assembler");
+
+gulp.task("assemble-content", function() {
+    pageAssembler.assembleIndexPage("en");
+    pageAssembler.assembleIndexPage("ru");
+
+    pageAssembler.assemblePosts();
+
+    pageAssembler.assemblePostHeaders("en");
+    pageAssembler.assemblePostHeaders("ru");
+});
+</pre>
+<h4 id="-7">Заключение</h4>
+<p>Мы рассмотрели хранение и преобразование содержимого статического сайта. Этого не достаточно для создания готового решения, ведь приведенный код освещает лишь ключевые моменты при работе с моделью, а вопрос создания представления вовсе не затронут. Тем не менее, такой подход к изложению должен предоставить неплохую основу и помочь определиться стоит этим заниматься или нет.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Еще заметки</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+<footer>
+</footer>
+</body>
+</html>

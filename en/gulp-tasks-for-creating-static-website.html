@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Gulp Tasks For Creating A Static Website</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/gulp-tasks-for-creating-static-website.html" class="flag flag-ru"></a>
+                <a href="/en/gulp-tasks-for-creating-static-website.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/en/">
+                            <span id="me">Eugene Skurikhin</span>
+                            <span class="icon-link"></span>
+                            <span id="tagline">Simple code that works</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="gulp-tasks-for-creating-static-website" class="col-md-9">
+<header>
+<h2>Gulp Tasks For Creating A Static Website</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2017-06-13</span>
+</header>
+<h4 id="datastorage">Data storage</h4>
+<p>Before describing data manipulations that result in final markup, we need to say a few words on how the data is stored. Multiple arguments for plain text in text files were listed in the previous article. But what directory structure to pick?</p>
+<p>The obvious step would be to separate site's content from its representation. That's why content is placed into the "model" directory while representation resides in the "view" folder. We will focus on the "model" part in the rest of the post.</p>
+<pre>
+$ tree source/model/ -L 2 | sed 6q
+source/model/
+├── localizable-strings.json
+└── posts
+    ├── 2014-01-24 color-git-branch-name-in-bash-prompt
+    ├── 2014-01-31 weather-forecast-widget
+    ├── 2014-04-22 making-ie-bho-enabled-by-default
+</pre>
+<h4 id="internationalization">Internationalization</h4>
+<p>The file <code>localizable-strings.json</code> stores strings that relate to the whole site rather than to a certain post:</p>
+<pre class="prettyprint">
+{
+    "author": {
+        "ru": "Евгений Скурихин",
+        "en": "Eugene Skurikhin"
+    },
+    "about": {
+        "author": {
+            "header": {
+                "ru": "Об авторе",
+                "en": "About the Author"
+</pre>
+<p>With this file and a simple transformation we can build an object containing named strings. These strings can be substituted into markup using their names.</p>
+<p>Here is how the transformation module looks like:</p>
+<pre class="prettyprint">
+exports.getStrings = language => {
+    let strings = JSON.parse(
+        fs.readFileSync("./source/model/localizable-strings.json", "utf8"));
+
+    localizeStrings(strings, language);
+    return strings;
+};
+
+function localizeStrings(currentObject, language) {
+    for(let propertyName in currentObject) {
+        if (currentObject.hasOwnProperty(propertyName)) {
+            if (currentObject[propertyName].hasOwnProperty(language)) {
+                currentObject[propertyName] = currentObject[propertyName][language];
+            } else {
+                localizeStrings(currentObject[propertyName], language);
+            }
+        }
+    }
+}
+</pre>
+<p>And here is the result JavaScript object:</p>
+<pre class="prettyprint">
+{ 
+    author: 'Eugene Skurikhin',
+    about: { 
+        author: { 
+            header: 'About the Author',
+</pre>
+<p>We're going to use this object later.</p>
+<h4 id="postsdatastructure">Posts data structure</h4>
+<p>Now let's take a look on posts. They all have identical structure:</p>
+<pre>
+$ lt source/model/posts/2014-01-24\ color-git-branch-name-in-bash-prompt/
+source/model/posts/2014-01-24 color-git-branch-name-in-bash-prompt/
+├── Coloring Your Git Branch Name.en.md
+├── cygwin-config-fix.sh
+├── cygwin-error-message.txt
+├── meta.json
+├── prompt-configuration.sh
+└── Раскрашиваем ветку Git в терминале.ru.md
+</pre>
+<p>The post consists of multiple files that are stored in a directory named using the following pattern:</p>
+<pre>
+&lt;publish date&gt; &lt;identifier&gt;</pre>
+<p>Publish date is in ISO format without time. This resolves regional issues (month before day in North America against day before month in Europe and Russia) and provides chronological order when files are sorted by name.</p>
+<p>It's tempting to take the date from catalog properties at first. It appeared to be a bad idea, because Unix stores only three dates: last access, last modification and last properties change. None of them fits (recall that the post was published in 2014).</p>
+<pre>
+$ stat source/model/posts/2014-01-24\ color-git-branch-name-in-bash-prompt/ 
+  File: source/model/posts/2014-01-24 color-git-branch-name-in-bash-prompt/
+  Size: 232             Blocks: 0          IO Block: 4096   directory
+Device: 808h/2056d      Inode: 136732054   Links: 2
+Access: (0755/drwxr-xr-x)  Uid: ( 1000/eugenesqr)   Gid: (  100/   users)
+Access: 2017-06-14 11:14:48.813876233 +0300
+Modify: 2017-05-17 10:39:57.912851285 +0300
+Change: 2017-05-17 10:39:57.912851285 +0300
+ Birth: -
+</pre>
+<p>Some file systems store creation date, however in general it's not available.</p>
+<p>Identifier – a string, that looks like a post's name. A GUID could be used instead to guarantee uniqueness, however it's meaningless and that makes working with the directory less convenient. The name-like string doesn't guarantee uniqueness, but it will most likely do well, because posts are usually named differently.</p>
+<p>Post body is written with <a href="https://daringfireball.net/projects/markdown/syntax">markdown</a> and stored in md files. Each post has at least two such files – one per supported language.</p>
+<p>Naming pattern for these files is the following:</p>
+<pre>&lt;post title&gt;.&lt;language abbreviation&gt;.md</pre>
+<p>Let's see what post attributes we have so far:</p>
+<ul>
+<li>identifier;</li>
+<li>title;</li>
+<li>publish date;</li>
+<li>content;</li>
+<li>language abbreviation.</li>
+</ul>
+<p>We still need these:</p>
+<ul>
+<li>relative URL;</li>
+<li>tags;</li>
+<li>cover image URL.</li>
+</ul>
+<p>URL can be built using existing attributes:</p>
+<pre>/&lt;language abbreviation&gt;/&lt;identifier&gt;</pre>
+<p>Tags and cover image URL are stored in <code>meta.json</code></p>
+<p>All the other files in the post directory are text fragments that inserted into post body. There are two reasons for such separation of content.</p>
+<p>First, the fragments – code, programs output etc. – are shared across language variations of the same post. Their duplication would violate <a href="https://en.wikipedia.org/wiki/Don%27t_repeat_yourself">"do not repeat yourself"</a> principle.</p>
+<p>Second, file extensions provide some useful information about their contents. This information can be used by text editors for proper syntax highlighting improving editing experience.</p>
+<h4 id="buildingpostpages">Building post pages</h4>
+<p>Let's see the code that builds post pages. The code is split into modules, each of which does its job on a particular layer of abstraction. We're going to start from the upper layer – the one that is responsible for building markup and is used directly from gulp tasks.</p>
+<pre class="prettyprint">
+exports.assemblePosts = () => {
+    return gulp.src([ "./source/model/posts/**/*.md" ])
+        .on("data", file => {
+            let preprocessed = preprocessor.preprocess(
+                fs.readFileSync("./source/view/index.master"), 
+                modelFactory.createPostPageModel(file));
+
+            file.contents = new Buffer(preprocessed, "utf-8");
+        })
+        .pipe(rename(path => {
+            path.basename = utility.getBasePath(utility.getLanguage(path.basename)) + 
+                utility.splitPostLocation(path.dirname).id;
+            path.dirname = "";
+            path.extname = ".html";
+        }))
+        .pipe(gulp.dest("./dist"));
+};
+</pre>
+<p>We have main content files as an input. For each file we build a post page model (<code>modelFactory.createPostPageModel</code> invocation) and substitute its fields into markup using <a href="https://www.npmjs.com/package/preprocess">preprocess</a>. Result HTML file is stored in output directory, which has the following structure:</p>
+<pre>
+$ lt dist | sed 4q
+dist
+├── color-git-branch-name-in-bash-prompt.html
+├── en
+│   ├── color-git-branch-name-in-bash-prompt.html
+</pre>
+<p>In other words, posts in Russian are placed into root (Russian – is default language), while posts in English are placed with the same name into "en" subfolder.</p>
+<p>Let's go one layer below and see <code>modelFactory.createPostPageModel</code>.</p>
+<pre class="prettyprint">
+exports.createPostPageModel = file => {
+    const postModel = createPostModel(file);
+
+    return Object.assign(
+        localizer.getStrings(postModel.language),
+        {
+            pageTitle: postModel.title,
+            basePath: utility.getBasePath(postModel.language),
+            language: postModel.language,
+            partials: { frame: "post" },
+            post: postModel,
+            url: buildPageUrls(postModel.language, postModel.id)
+        });
+};
+</pre>
+<p>First we build a post model, then it's enclosed in a post page model along with localized strings and a few other attributes.</p>
+<p>We already seen URL construction from language abbreviation and an identifier. Internationalization was mentioned as well. It worth noting that we actually have two URLs (one per language) and they both included into page model to allow for switching the languages. Only post model is left uncovered.</p>
+<pre class="prettyprint">
+function createPostModel(file) {
+    const post = extractAttributesFromLocation(file.path);
+
+    // Insert code blocks
+    const contents = preprocessor.preprocess(
+        file.contents.toString(),
+        {},
+        {
+            srcDir: path.dirname(file.path)
+        });
+
+    post.body = new markdown.Converter().makeHtml(contents);
+
+    return post;
+}
+</pre>
+<p><code>extractAttributesFromLocation</code> gets post attributes from its file name and the name of its parent directory. Then all the common fragments inserted using <code>preprocess</code>. Finally the post gets translated from markdown to HTML using <a href="https://github.com/showdownjs/showdown">showdown</a>.</p>
+<h4 id="buildingpostlistpage">Building post list page</h4>
+<p>Post list – is a set of post headers sorted by publish date in reverse order. By header we mean post title plus a few first paragraphs. The list content is more dynamic compared to post page's content, one might expect filtering, paging, animation and so on there. Search optimization isn't that important for this page.</p>
+<p>This leads us to dynamic list loading. In post list page model the list itself is therefore absent, its generation is separated and it is served with an extra AJAX request. Post list page model becomes similar to post page model. No point in showing it here again.</p>
+<h4 id="buildingpostlistheaders">Building post list headers</h4>
+<p>The list is served as a result of an AJAX request, therefore it makes sense to store the list in a file in JSON format. Its transformation to JavaScript object in this case will be as unobtrusive as possible. Post headers may contain any number of paragraphs, this number needs to be stored somewhere. We already mentioned <code>meta.json</code>, it perfectly fits our needs.</p>
+<pre class="prettyprint">
+{
+    "tags": [ "gulp" ],
+    "header": {
+        "numberOfParagraphs": 2,
+        "cover": ""
+    }
+}
+</pre>
+<p>The code responsible for building the list resides in the same model building module:</p>
+<pre class="prettyprint">
+exports.createPostHeaderModel = file => {
+    let post = extractAttributesFromLocation(file.path);
+    const meta = readMeta(file.path);
+    post.tags = meta.tags;
+    post.header = getFirstParagraphs(
+        file.contents.toString("utf8"),
+        meta.header.numberOfParagraphs);
+
+    post = Object.assign(
+        post,
+        {
+            url: buildPageUrl(post.language, post.id)
+        });
+
+    // Remove extra fields to save bandwidth
+    delete post.language;
+
+    return post;
+};
+</pre>
+<p>First we use <code>extractAttributesFromLocation</code> the same way we did before. Next we process metadata and get the number of paragraphs needed for a post header.</p>
+<pre class="prettyprint">
+function readMeta(postFileLocation) {
+    const meta = JSON.parse(
+        fsUtilities.getTextContents(
+            path.dirname(postFileLocation) + "/meta.json"));
+    assert.objectNotNull(meta, "post meta is missing for " + postFileLocation);
+
+    return meta;
+};
+</pre>
+<p>Finally we read the required number of first paragraphs:</p>
+<pre class="prettyprint">
+function getFirstParagraphs(fileContents, numberOfParagraphs) {
+    assert.condition(!isNaN(numberOfParagraphs), "number of paragraphs must be a numeric value");
+    assert.condition(numberOfParagraphs > 0, "number of paragraphs must be positive");
+
+    let paragraphsRead = 0;
+    let lastBlankLinePosition = 0;
+    const separator = os.EOL + os.EOL;
+    while (paragraphsRead < numberOfParagraphs && lastBlankLinePosition < fileContents.length) {
+        lastBlankLinePosition = fileContents.indexOf(separator, lastBlankLinePosition) + 1;
+        paragraphsRead++;
+    }
+
+    return fileContents.substring(0, lastBlankLinePosition - 1);
+};
+</pre>
+<h4 id="combiningitalltogether">Combining it all together</h4>
+<p>Here is the gulp task responsible for building all the site's pages:</p>
+<pre class="prettyprint">
+const gulp = require("gulp");
+const pageAssembler = require("./build/page-assembler");
+
+gulp.task("assemble-content", function() {
+    pageAssembler.assembleIndexPage("en");
+    pageAssembler.assembleIndexPage("ru");
+
+    pageAssembler.assemblePosts();
+
+    pageAssembler.assemblePostHeaders("en");
+    pageAssembler.assemblePostHeaders("ru");
+});
+</pre>
+<h4 id="conclusion">Conclusion</h4>
+<p>We've seen how data for a static website can be stored and processed. This is by no means a complete solution. The code only highlights key concepts for working with model, presentation layer isn't covered at all. Nevertheless it should be enough to grasp the idea and decide whether it's worth going this way or not.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Other posts</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+<footer>
+</footer>
+</body>
+</html>
