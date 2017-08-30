@@ -99,7 +99,7 @@ function localizeStrings(currentObject, language) {
 <h4 id="-2">Заметки, структура данных</h4>
 <p>Теперь обратимся к заметкам. Все они имеют одинаковую структуру, возьмем для примера самую первую:</p>
 <pre>
-$ lt source/model/posts/2014-01-24\ color-git-branch-name-in-bash-prompt/
+$ tree source/model/posts/2014-01-24\ color-git-branch-name-in-bash-prompt/
 source/model/posts/2014-01-24 color-git-branch-name-in-bash-prompt/
 ├── Coloring Your Git Branch Name.en.md
 ├── cygwin-config-fix.sh
@@ -171,7 +171,7 @@ exports.assemblePosts = () => {
 </pre>
 <p>На входе имеем все файлы с основным текстом заметок. Для каждого файла происходит построение модели страницы заметки (вызов <code>modelFactory.createPostPageModel</code>) и ее наложение на разметку при помощи <a href="https://www.npmjs.com/package/preprocess">preprocess</a>. Получившийся HTML файл складывается в выходной каталог, который имеет следующую структуру:</p>
 <pre>
-$ lt dist | sed 4q
+$ tree dist | sed 4q
 dist
 ├── color-git-branch-name-in-bash-prompt.html
 ├── en

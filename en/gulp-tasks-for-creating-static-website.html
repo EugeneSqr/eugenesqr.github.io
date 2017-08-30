@@ -99,7 +99,7 @@ function localizeStrings(currentObject, language) {
 <h4 id="postsdatastructure">Posts data structure</h4>
 <p>Now let's take a look on posts. They all have identical structure:</p>
 <pre>
-$ lt source/model/posts/2014-01-24\ color-git-branch-name-in-bash-prompt/
+$ tree source/model/posts/2014-01-24\ color-git-branch-name-in-bash-prompt/
 source/model/posts/2014-01-24 color-git-branch-name-in-bash-prompt/
 ├── Coloring Your Git Branch Name.en.md
 ├── cygwin-config-fix.sh
@@ -172,7 +172,7 @@ exports.assemblePosts = () => {
 </pre>
 <p>We have main content files as an input. For each file we build a post page model (<code>modelFactory.createPostPageModel</code> invocation) and substitute its fields into markup using <a href="https://www.npmjs.com/package/preprocess">preprocess</a>. Result HTML file is stored in output directory, which has the following structure:</p>
 <pre>
-$ lt dist | sed 4q
+$ tree dist | sed 4q
 dist
 ├── color-git-branch-name-in-bash-prompt.html
 ├── en
