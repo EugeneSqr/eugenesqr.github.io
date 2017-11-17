@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Полноэкранное видео в IOS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/styles.css" media="screen">
+    <script src="../js/core.js"></script>
+</head>
+<body onload="PR.prettyPrint()">
+    <div id="header" class="col-md-12">
+        <div class="container">
+            <div class="languagebar text-right">
+                <a href="/fullscreen-videos-ios.html" class="flag flag-ru"></a>
+                <a href="/en/fullscreen-videos-ios.html" class="flag flag-us"></a>
+            </div>
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/">
+                            <span id="me">Евгений Скурихин</span>
+                            <span class="icon-link"></span>
+                            <span id="tagline">Простой код, который работает</span>
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="nav"><a href="https://github.com/EugeneSqr">github</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+<section class="container">
+<div class="view-frame">
+<article id="fullscreen-videos-ios" class="col-md-9">
+<header>
+<h2>Полноэкранное видео в IOS</h2>
+<span class="glyphicon glyphicon-time date"></span>
+<span class="date">2017-11-17</span>
+</header>
+<h4 id="html5ios">Как перевести HTML5 видео в полноэкранный режим в IOS?</h4>
+<p>Ответ на этот вопрос оказался неочевидным. Быстрый поиск наводит на следующие соображения:</p>
+<ol>
+<li><code>webkitRequestFullScreen</code> – стандартный способ для браузеров на основе webkit (Chrome и Safari). Проблема лишь в том, что на мобильных устройствах под управлением IOS вы этот метод не найдете.</li>
+<li><code>requestFullscreen</code> – может быть так, по стандарту W3C? Тот же эффект.</li>
+<li>Посмотрим на <a href="https://caniuse.com/#feat=fullscreen">поддержку fullscreen API</a> различными браузерами. Легко видеть, что API не поддерживается Safari в IOS. Сразу пробуем Chrome и убеждаемся, что в нем под IOS дела обстоят аналогичным образом.</li>
+</ol>
+<h4 id="">Что делать?</h4>
+<p>Ответ пришел неожиданно. Вот <a href="https://stackoverflow.com/questions/18489680/ios-safari-detect-when-user-clicks-done-in-native-player">здесь</a> есть упоминание о native событии <code>webkitendfullscreen</code>, довольно быстро находится парное к нему событие <code>webkitbeginfullscreen</code>. Наверняка должно быть что-то еще. И действительно, у Apple нашлась <a href="https://developer.apple.com/library/content/documentation/AudioVideo/Conceptual/Using_HTML5_Audio_Video/ControllingMediaWithJavaScript/ControllingMediaWithJavaScript.html">отличная статья</a>, в которой показано использование ключевых методов:</p>
+<ul>
+<li><code>webkitEnterFullScreen</code></li>
+<li><code>webkitExitFullScreen</code></li>
+</ul>
+<h4 id="-1">Мораль</h4>
+<p>В этой истории примечательно, что основные источники информации по web разработке – stackoverflow и MDN – не содержали практически никакой информации по теме. Не стоит пренебрегать источниками от Apple и Microsoft, когда речь заходит об их продуктах.</p>
+</article>
+<section id="sidebar" class="col-md-3 visible-md visible-lg">
+    <h5>Еще заметки</h5>
+    <ul id="sidebar-list" class="separated-list">
+    </ul>
+</section>
+
+<script src="/js/common.js"></script>
+<script src="/js/postViewModel.js"></script>
+<script>
+    "use strict";
+    System.import("source/view/js/postViewModel.js").then(function(m) {
+        var viewModel = new m.PostViewModel();
+        viewModel.inflate();
+    });
+</script>
+
+</div>
+</section>
+<footer>
+</footer>
+</body>
+</html>
