@@ -44,14 +44,14 @@
 <pre>
 $ tree source/model/ -L 2 | sed 6q
 source/model/
-├── localizable-strings.json
+├── localizable-strings-static.json
 └── posts
     ├── 2014-01-24 color-git-branch-name-in-bash-prompt
     ├── 2014-01-31 weather-forecast-widget
     ├── 2014-04-22 making-ie-bho-enabled-by-default
 </pre>
 <h4 id="-1">Интернационализация</h4>
-<p>Файл <code>localizable-strings.json</code> хранит строки, не относящиеся к конкретной заметке, а скорее к сайту в целом: </p>
+<p>Файл <code>localizable-strings-static.json</code> хранит строки, не относящиеся к конкретной заметке, а скорее к сайту в целом:</p>
 <pre class="prettyprint">
 {
     "author": {
@@ -69,7 +69,7 @@ source/model/
 <pre class="prettyprint">
 exports.getStrings = language => {
     let strings = JSON.parse(
-        fs.readFileSync("./source/model/localizable-strings.json", "utf8"));
+        fs.readFileSync("./source/model/localizable-strings-static.json", "utf8"));
 
     localizeStrings(strings, language);
     return strings;
