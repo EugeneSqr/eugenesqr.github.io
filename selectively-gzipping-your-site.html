@@ -76,7 +76,7 @@ server.use(restify.gzipResponse());
 <pre class="prettyprint">
 gzip -9 angular.min.js
 </pre>
-<p><img src="http://res.cloudinary.com/eugenesqr/image/upload/v1471941879/selectively-gzipping-your-site/gzipped.png" alt="gzipped content in FF" class="img-responsive thumbnail pull-right"></img></p>
+<p><img src="https://res.cloudinary.com/eugenesqr/image/upload/v1471941879/selectively-gzipping-your-site/gzipped.png" alt="gzipped content in FF" class="img-responsive thumbnail pull-right"></img></p>
 <p>и переименовал получившийся файл angular.min.js.gz обратно в angular.min.js. </p>
 <p>Выглядело классно: браузер посылал заголовок <code>Accept-Encoding: gzip,deflate</code>, сервер выдавал содержимое сжатого файла с соответствующим заголовком <code>Content-Encoding: gzip</code>, но браузер отказывался его распаковывать.</p>
 <h4 id="-3">Следующая попытка</h4>
