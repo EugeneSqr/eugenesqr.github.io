@@ -47,7 +47,7 @@
 <p><code>HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Group Policy Objects\\{F658BF73-ACAA-4FF3-9F11-D57C9DB7EB16}User\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Ext\\CLSID
       </code></p>
 <p>со строковым значением <code>{0CEA4335-9408-4C6E-8763-5E1C361FDA96}</code> установленным в 1.</p>
-<p>Отлично, <code>{0CEA4335-9408-4C6E-8763-5E1C361FDA96}</code> GUID - это CLSID моего BHO класса. Но что тогда вот это: <code>{F658BF73-ACAA-4FF3-9F11-D57C9DB7EB16}User</code>? Если честно, я не знаю, но что-то подсказывает, что это не может быть так просто зашито в код. Лучше вместо этого добавить такой же ключ в <code>HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Ext\\CLSID</code> как описано во второй статье... и о чудо, оно работает!</p>
+<p>Отлично, <code>{0CEA4335-9408-4C6E-8763-5E1C361FDA96}</code> GUID - это CLSID моего BHO класса. Но что тогда вот это: <code>{F658BF73-ACAA-4FF3-9F11-D57C9DB7EB16}User</code>? Если честно, я не знаю, но что-то подсказывает, что это не может быть так просто зашито в код. Лучше вместо этого добавить такой же ключ в <code>HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Ext\\CLSID</code> как описано во второй статье… и о чудо, оно работает!</p>
 <h4 id="-2">Результат</h4>
 <p>Вполне можно запустить .bat или .ps1 файл во время установки и покончить с этим. Однако, если вы создаете BHO в Visual Studio, используя шаблон ATL, то куда лучше будет поместить всю реестровую магию в .rgs файл:</p>
 <pre class="prettyprint">

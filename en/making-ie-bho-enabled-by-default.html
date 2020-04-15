@@ -47,7 +47,7 @@
 <p><code>HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Group Policy Objects\\{F658BF73-ACAA-4FF3-9F11-D57C9DB7EB16}User\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Ext\\CLSID
       </code></p>
 <p>with the string value <code>{0CEA4335-9408-4C6E-8763-5E1C361FDA96}</code> set to 1.</p>
-<p>Alright, the <code>{0CEA4335-9408-4C6E-8763-5E1C361FDA96}</code> GUID is a CLSID of my BHO class. But what's that: <code>{F658BF73-ACAA-4FF3-9F11-D57C9DB7EB16}User</code>? To be honest I don't know, but I'm pretty sure that hardcoding this value is a bad idea. Instead let's add the same key to <code>HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Ext\\CLSID</code> as described in the second article... and it works.</p>
+<p>Alright, the <code>{0CEA4335-9408-4C6E-8763-5E1C361FDA96}</code> GUID is a CLSID of my BHO class. But what's that: <code>{F658BF73-ACAA-4FF3-9F11-D57C9DB7EB16}User</code>? To be honest I don't know, but I'm pretty sure that hardcoding this value is a bad idea. Instead let's add the same key to <code>HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Ext\\CLSID</code> as described in the second article… and it works.</p>
 <h4 id="theresult">The Result</h4>
 <p>At this point we can launch a .bat or .ps1 file during deployment and we're done. However If you're creating the BHO in Visual Studio using ATL project template the better way is to place all the registry magic to your registrar script (.rgs) file:</p>
 <pre class="prettyprint">
